@@ -733,6 +733,42 @@ PrefabInstance:
       propertyPath: m_Color.a
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2443863841378991831, guid: b6de38521f579254192f2cb391503e55, type: 3}
+      propertyPath: m_Colors.m_PressedColor.b
+      value: 0.8235294
+      objectReference: {fileID: 0}
+    - target: {fileID: 2443863841378991831, guid: b6de38521f579254192f2cb391503e55, type: 3}
+      propertyPath: m_Colors.m_PressedColor.g
+      value: 0.6627451
+      objectReference: {fileID: 0}
+    - target: {fileID: 2443863841378991831, guid: b6de38521f579254192f2cb391503e55, type: 3}
+      propertyPath: m_Colors.m_PressedColor.r
+      value: 0.34117648
+      objectReference: {fileID: 0}
+    - target: {fileID: 2443863841378991831, guid: b6de38521f579254192f2cb391503e55, type: 3}
+      propertyPath: m_Colors.m_SelectedColor.b
+      value: 0.6901961
+      objectReference: {fileID: 0}
+    - target: {fileID: 2443863841378991831, guid: b6de38521f579254192f2cb391503e55, type: 3}
+      propertyPath: m_Colors.m_SelectedColor.g
+      value: 0.6901961
+      objectReference: {fileID: 0}
+    - target: {fileID: 2443863841378991831, guid: b6de38521f579254192f2cb391503e55, type: 3}
+      propertyPath: m_Colors.m_SelectedColor.r
+      value: 0.6901961
+      objectReference: {fileID: 0}
+    - target: {fileID: 2443863841378991831, guid: b6de38521f579254192f2cb391503e55, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.b
+      value: 0.6901961
+      objectReference: {fileID: 0}
+    - target: {fileID: 2443863841378991831, guid: b6de38521f579254192f2cb391503e55, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.g
+      value: 0.6901961
+      objectReference: {fileID: 0}
+    - target: {fileID: 2443863841378991831, guid: b6de38521f579254192f2cb391503e55, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.r
+      value: 0.6901961
+      objectReference: {fileID: 0}
     - target: {fileID: 3381006141307003436, guid: b6de38521f579254192f2cb391503e55, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1077,6 +1113,26 @@ PrefabInstance:
     - target: {fileID: 3063635689741256546, guid: 59864d96c6f9bb348919e7b15d8ebee2, type: 3}
       propertyPath: m_Name
       value: Particle System
+      objectReference: {fileID: 0}
+    - target: {fileID: 9059437956431485328, guid: 59864d96c6f9bb348919e7b15d8ebee2, type: 3}
+      propertyPath: InitialModule.startSize.minScalar
+      value: 0.005
+      objectReference: {fileID: 0}
+    - target: {fileID: 9059437956431485328, guid: 59864d96c6f9bb348919e7b15d8ebee2, type: 3}
+      propertyPath: EmissionModule.rateOverTime.scalar
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 9059437956431485328, guid: 59864d96c6f9bb348919e7b15d8ebee2, type: 3}
+      propertyPath: InitialModule.startSize.minMaxState
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 9059437956431485328, guid: 59864d96c6f9bb348919e7b15d8ebee2, type: 3}
+      propertyPath: InitialModule.startSizeY.minMaxState
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 9059437956431485328, guid: 59864d96c6f9bb348919e7b15d8ebee2, type: 3}
+      propertyPath: InitialModule.startSizeZ.minMaxState
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

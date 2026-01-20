@@ -139,6 +139,7 @@ GameObject:
   m_Component:
   - component: {fileID: 629508095218355831}
   - component: {fileID: 5272456598212861350}
+  - component: {fileID: 399768825874800378}
   m_Layer: 0
   m_Name: AudioManager
   m_TagString: Untagged
@@ -202,6 +203,16 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: eb0aaf39db206224aafc96659153ba01, type: 3}
   - name: Tududum
     clip: {fileID: 8300000, guid: 57445ad37b674ce45a987643f112882d, type: 3}
+  - name: Blip
+    clip: {fileID: 8300000, guid: 9b5d4148734ad624ca26409fd2ca674d, type: 3}
+--- !u!81 &399768825874800378
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5458243197446245159}
+  m_Enabled: 1
 --- !u!1 &6612240218594084398
 GameObject:
   m_ObjectHideFlags: 0

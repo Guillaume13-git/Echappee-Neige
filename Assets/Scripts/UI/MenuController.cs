@@ -2,10 +2,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 /// <summary>
 /// Contrôle le menu principal.
-/// Affichage du meilleur score, navigation vers les scènes.
+/// Gère la navigation avec un délai pour laisser les sons se jouer.
 /// </summary>
 public class MenuController : MonoBehaviour
 {
@@ -15,169 +16,94 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Button _scoresButton;
     [SerializeField] private Button _optionsButton;
     [SerializeField] private Button _quitButton;
-    
-    [Header("Effects (Optional)")]
-    [SerializeField] private ParticleSystem _snowParticles;
-    
+
+    private bool _isNavigating = false; 
+
     private void Start()
     {
-        Debug.Log("[MenuController] Initialisation du menu principal");
-        
-        // Afficher le meilleur score
-        DisplayBestScore();
-        
-        // Lier les boutons
         SetupButtons();
-        
-        // Lancer la musique du menu
-        StartMenuMusic();
-        
-        // Particules de neige
-        if (_snowParticles != null)
+        DisplayBestScore();
+        CheckAndPlayMenuMusic();
+    }
+
+    private void CheckAndPlayMenuMusic()
+    {
+        if (AudioManager.Instance != null)
         {
-            _snowParticles.Play();
+            AudioManager.Instance.PlayMenuMusic();
         }
     }
-    
-    /// <summary>
-    /// Configure les listeners des boutons.
-    /// </summary>
+
     private void SetupButtons()
     {
-        if (_playButton != null)
-            _playButton.onClick.AddListener(OnPlayClicked);
-        else
-            Debug.LogWarning("[MenuController] PlayButton non assigné !");
-        
-        if (_scoresButton != null)
-            _scoresButton.onClick.AddListener(OnScoresClicked);
-        
-        if (_optionsButton != null)
-            _optionsButton.onClick.AddListener(OnOptionsClicked);
-        
-        if (_quitButton != null)
-            _quitButton.onClick.AddListener(OnQuitClicked);
+        _playButton?.onClick.RemoveAllListeners();
+        _optionsButton?.onClick.RemoveAllListeners();
+        _scoresButton?.onClick.RemoveAllListeners();
+        _quitButton?.onClick.RemoveAllListeners();
+
+        // On utilise maintenant la navigation avec délai
+        _playButton?.onClick.AddListener(() => OnClickNavigation("Gameplay", "LetsGo"));
+        _optionsButton?.onClick.AddListener(() => OnClickNavigation("Options", "Blip"));
+        _scoresButton?.onClick.AddListener(() => OnClickNavigation("Scores", "Blip"));
+        _quitButton?.onClick.AddListener(QuitGame);
     }
-    
+
     /// <summary>
-    /// Affiche le meilleur score sauvegardé.
+    /// Lance la coroutine de changement de scène.
     /// </summary>
+    private void OnClickNavigation(string sceneName, string sfx)
+    {
+        if (_isNavigating) return;
+        StartCoroutine(NavWithDelay(sceneName, sfx));
+    }
+
+    /// <summary>
+    /// Coroutine qui joue le son, attend 0.2s, puis change de scène.
+    /// Cela évite que le processeur ne coupe le son instantanément.
+    /// </summary>
+    private IEnumerator NavWithDelay(string sceneName, string sfx)
+    {
+        _isNavigating = true;
+
+        if (AudioManager.Instance != null)
+        {
+            // On joue le son (Blip ou LetsGo)
+            AudioManager.Instance.PlaySFX(sfx);
+        }
+
+        // WaitForSecondsRealtime permet d'ignorer une éventuelle pause du TimeScale
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        Debug.Log($"[MenuController] Chargement de la scène : {sceneName}");
+        SceneManager.LoadScene(sceneName);
+    }
+
     private void DisplayBestScore()
     {
-        if (_bestScoreText == null)
+        if (_bestScoreText == null) return;
+
+        if (HighScoreManager.Instance != null && HighScoreManager.Instance.HighScores.Length > 0)
         {
-            Debug.LogWarning("[MenuController] BestScoreText non assigné !");
-            return;
+            int score = HighScoreManager.Instance.HighScores[0];
+            _bestScoreText.text = score > 0 ? $"Meilleur Score : {score:N0}" : "Aucun score enregistré";
         }
-        
-        // Vérifier que HighScoreManager existe
-        if (HighScoreManager.Instance == null)
+        else
         {
             _bestScoreText.text = "Meilleur Score : ---";
-            Debug.LogWarning("[MenuController] HighScoreManager introuvable !");
-            return;
-        }
-        
-        int[] highScores = HighScoreManager.Instance.HighScores;
-        int bestScore = highScores[0];
-        
-        if (bestScore > 0)
-        {
-            _bestScoreText.text = $"Meilleur Score : {bestScore:N0}";
-        }
-        else
-        {
-            _bestScoreText.text = "Aucun score enregistré";
         }
     }
-    
-    /// <summary>
-    /// Démarre la musique du menu.
-    /// </summary>
-    private void StartMenuMusic()
+
+    private void QuitGame()
     {
-        if (AudioManager.Instance == null)
-        {
-            Debug.LogError("[MenuController] AudioManager.Instance est NULL ! Vérifier que AudioManager existe dans la scène.");
-            return;
-        }
+        if (_isNavigating) return;
         
-        Debug.Log("[MenuController] Lancement de la musique du menu");
-        AudioManager.Instance.PlayMenuMusic();
-    }
-    
-    /// <summary>
-    /// Bouton Jouer : vérifie si le tutoriel doit être affiché.
-    /// </summary>
-    private void OnPlayClicked()
-    {
-        Debug.Log("[MenuController] Bouton JOUER cliqué");
-        
-        // Son de clic
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlaySFX("LetsGo");
-        }
-        
-        // Vérifier si le tutoriel doit être affiché
-        if (SettingsManager.Instance != null && SettingsManager.Instance.ShowTutorial)
-        {
-            Debug.Log("[MenuController] Chargement du tutoriel");
-            SceneManager.LoadScene("Tutorial");
-        }
-        else
-        {
-            Debug.Log("[MenuController] Lancement direct du jeu");
-            SceneManager.LoadScene("Gameplay");
-        }
-    }
-    
-    /// <summary>
-    /// Bouton Scores : charge la scène des meilleurs scores.
-    /// </summary>
-    private void OnScoresClicked()
-    {
-        Debug.Log("[MenuController] Bouton SCORES cliqué");
-        
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlaySFX("Blip");
-        }
-        
-        SceneManager.LoadScene("Scores");
-    }
-    
-    /// <summary>
-    /// Bouton Options : charge la scène des options.
-    /// </summary>
-    private void OnOptionsClicked()
-    {
-        Debug.Log("[MenuController] Bouton OPTIONS cliqué");
-        
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlaySFX("Blip");
-        }
-        
-        SceneManager.LoadScene("Options");
-    }
-    
-    /// <summary>
-    /// Bouton Quitter : ferme l'application.
-    /// </summary>
-    private void OnQuitClicked()
-    {
-        Debug.Log("[MenuController] Bouton QUITTER cliqué");
-        
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlaySFX("Blip");
-        }
-        
-        #if UNITY_EDITOR
+        Debug.Log("[MenuController] Quitter le jeu");
+        AudioManager.Instance?.PlaySFX("Blip");
+
+#if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
-        #else
+#else
         Application.Quit();
-        #endif
+#endif
     }
 }

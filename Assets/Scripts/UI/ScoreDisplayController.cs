@@ -22,24 +22,23 @@ public class ScoresDisplayController : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button _backButton;
 
-
-    // ---------------------------------------------------------
-    // INITIALISATION
-    // ---------------------------------------------------------
     private void Start()
     {
+        // 1. Afficher les scores
         DisplayHighScores();
 
+        // 2. Configurer le bouton retour
         if (_backButton != null)
             _backButton.onClick.AddListener(OnBackClicked);
 
-        AudioManager.Instance?.PlayMenuMusic();
+        // 3. Gestion de la musique (Sécurité Singleton)
+        if (AudioManager.Instance != null)
+        {
+            // Utilise ta méthode avec vérification par nom pour éviter la coupure
+            AudioManager.Instance.PlayMenuMusic();
+        }
     }
 
-
-    // ---------------------------------------------------------
-    // DISPLAY SCORES
-    // ---------------------------------------------------------
     private void DisplayHighScores()
     {
         if (HighScoreManager.Instance == null)
@@ -52,29 +51,26 @@ public class ScoresDisplayController : MonoBehaviour
 
         for (int i = 0; i < _scoreEntries.Length; i++)
         {
-            if (_scoreEntries[i] == null)
-            {
-                Debug.LogWarning($"[ScoresDisplay] ScoreEntry {i + 1} non assigné !");
-                continue;
-            }
+            if (_scoreEntries[i] == null) continue;
 
             Transform entry = _scoreEntries[i].transform;
 
+            // Récupération des composants
             TextMeshProUGUI rankText = entry.Find("RankText")?.GetComponent<TextMeshProUGUI>();
             TextMeshProUGUI scoreText = entry.Find("ScoreText")?.GetComponent<TextMeshProUGUI>();
             Image medalImage = entry.Find("MedalImage")?.GetComponent<Image>();
 
-            // Rang
+            // Affichage du Rang
             if (rankText != null)
                 rankText.text = $"#{i + 1}";
 
-            // Score
+            // Affichage du Score
             if (scoreText != null)
             {
-                if (highScores[i] > 0)
+                if (i < highScores.Length && highScores[i] > 0)
                 {
                     scoreText.text = highScores[i].ToString("N0");
-                    scoreText.color = new Color(1f, 0.84f, 0f); // Or
+                    scoreText.color = new Color(1f, 0.84f, 0f); // Couleur dorée pour les scores actifs
                 }
                 else
                 {
@@ -83,22 +79,22 @@ public class ScoresDisplayController : MonoBehaviour
                 }
             }
 
-            // Médailles
+            // Gestion des Médailles
             if (medalImage != null)
             {
-                if (i == 0 && _goldMedal != null && highScores[i] > 0)
+                bool hasScore = i < highScores.Length && highScores[i] > 0;
+                Sprite medalToAssign = null;
+
+                if (hasScore)
                 {
-                    medalImage.sprite = _goldMedal;
-                    medalImage.enabled = true;
+                    if (i == 0) medalToAssign = _goldMedal;
+                    else if (i == 1) medalToAssign = _silverMedal;
+                    else if (i == 2) medalToAssign = _bronzeMedal;
                 }
-                else if (i == 1 && _silverMedal != null && highScores[i] > 0)
+
+                if (medalToAssign != null)
                 {
-                    medalImage.sprite = _silverMedal;
-                    medalImage.enabled = true;
-                }
-                else if (i == 2 && _bronzeMedal != null && highScores[i] > 0)
-                {
-                    medalImage.sprite = _bronzeMedal;
+                    medalImage.sprite = medalToAssign;
                     medalImage.enabled = true;
                 }
                 else
@@ -107,18 +103,11 @@ public class ScoresDisplayController : MonoBehaviour
                 }
             }
         }
-
-        Debug.Log("[ScoresDisplay] Affichage de 10 scores terminé");
     }
 
-
-    // ---------------------------------------------------------
-    // BUTTONS
-    // ---------------------------------------------------------
     private void OnBackClicked()
     {
-        Debug.Log("[ScoresDisplay] Retour au menu principal");
-
+        // Joue le son avant de changer de scène
         AudioManager.Instance?.PlaySFX("Blip");
         SceneManager.LoadScene("MainMenu");
     }

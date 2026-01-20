@@ -1,78 +1,58 @@
 using UnityEngine;
 
-/// <summary>
-/// Classe générique Singleton pour Unity.
-/// Garantit qu'une seule instance existe et la rend accessible globalement.
-/// Utilisation : public class MonManager : Singleton<MonManager>
-/// </summary>
 public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
-    private static T _instance;
+    protected static T _instance;
     private static readonly object _lock = new object();
     private static bool _applicationIsQuitting = false;
 
-    /// <summary>
-    /// Accès global à l'instance unique.
-    /// </summary>
     public static T Instance
     {
         get
         {
-            if (_applicationIsQuitting)
-            {
-                Debug.LogWarning($"[Singleton] Instance de '{typeof(T)}' déjà détruite. Retourne null.");
-                return null;
-            }
+            if (_applicationIsQuitting) return null;
 
             lock (_lock)
             {
                 if (_instance == null)
                 {
-                    // Nouvelle API Unity 2023+
                     _instance = FindFirstObjectByType<T>();
 
-                    if (_instance == null)
-                    {
-                        Debug.LogError($"[Singleton] Aucune instance de '{typeof(T)}' trouvée dans la scène !");
-                    }
+                    // On ne met PAS de LogError ici. 
+                    // On laisse le script appelant gérer le "null" avec un point d'interrogation.
                 }
-
                 return _instance;
             }
         }
     }
 
-    /// <summary>
-    /// Initialisation du Singleton.
-    /// </summary>
     protected virtual void Awake()
     {
-        if (_instance != null && _instance != this)
+        if (_applicationIsQuitting) return;
+
+        if (_instance == null)
         {
-            Debug.LogWarning($"[Singleton] Instance de '{typeof(T)}' déjà existante. Destruction de {gameObject.name}");
-            Destroy(gameObject);
-            return;
+            _instance = this as T;
+            
+            // On ne rend persistant que si c'est l'objet racine
+            if (transform.parent == null)
+            {
+                DontDestroyOnLoad(gameObject);
+            }
         }
-
-        _instance = this as T;
+        else if (_instance != this)
+        {
+            // ✅ CRITIQUE : Si une instance existe déjà (celle du MainMenu), 
+            // on détruit immédiatement la nouvelle (celle de la scène Options).
+            Debug.Log($"[Singleton] Doublon de {typeof(T)} détecté sur {gameObject.name}. Destruction du doublon.");
+            Destroy(gameObject);
+        }
     }
 
-    /// <summary>
-    /// Gestion de la destruction lors de la fermeture de l'application.
-    /// </summary>
-    protected virtual void OnApplicationQuit()
-    {
-        _applicationIsQuitting = true;
-    }
+    protected virtual void OnApplicationQuit() => _applicationIsQuitting = true;
 
-    /// <summary>
-    /// Réinitialisation pour éviter les problèmes en mode Editor.
-    /// </summary>
     protected virtual void OnDestroy()
     {
-        if (_instance == this)
-        {
-            _instance = null;
-        }
+        if (_instance == this) _instance = null;
     }
 }

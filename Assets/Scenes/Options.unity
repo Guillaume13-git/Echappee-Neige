@@ -3339,7 +3339,7 @@ GameObject:
   - component: {fileID: 2090812248}
   - component: {fileID: 2090812247}
   m_Layer: 5
-  m_Name: Ctrl
+  m_Name: Shift
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3384,7 +3384,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 304cff54d49cfa243a75672065a73f25, type: 3}
+  m_Texture: {fileID: 2800000, guid: 0dc3f5c22aa73e3479bef0c1bd682dd8, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0

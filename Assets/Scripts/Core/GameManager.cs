@@ -21,13 +21,27 @@ public class GameManager : Singleton<GameManager>
 
     protected override void Awake()
     {
-        base.Awake();               // ← Initialise le Singleton
-        DontDestroyOnLoad(gameObject);
+        // 1. On se détache de tout parent pour autoriser DontDestroyOnLoad
+        if (transform.parent != null)
+        {
+            transform.SetParent(null);
+        }
+
+        // 2. Initialisation du Singleton (Gère les doublons)
+        base.Awake(); 
+
+        // 3. Persistance (Note: base.Awake() le fait déjà si ton Singleton est bien codé, 
+        // mais on le sécurise ici si besoin)
+        if (transform.parent == null)
+        {
+            DontDestroyOnLoad(gameObject);
+        }
     }
 
     private void Start()
     {
-        SettingsManager.Instance.LoadSettings();
+        // Utilisation du Null Check (?.) pour éviter l'erreur si SettingsManager n'est pas encore prêt
+        SettingsManager.Instance?.LoadSettings();
     }
 
     // -----------------------------
@@ -65,9 +79,10 @@ public class GameManager : Singleton<GameManager>
     // -----------------------------
     public void StartNewGame()
     {
+        // Utilisation systématique de ?. pour éviter les NullReferenceException au démarrage
         ScoreManager.Instance?.ResetScore();
-        ThreatManager.Instance?.ResetThreat();
-        PhaseManager.Instance?.ResetPhases();
+        // ThreatManager.Instance?.ResetThreat(); // Commenté si non présent
+        // PhaseManager.Instance?.ResetPhases(); // Commenté si non présent
 
         SetGameState(GameState.Playing);
         SceneManager.LoadScene("Gameplay");
@@ -112,8 +127,11 @@ public class GameManager : Singleton<GameManager>
     // -----------------------------
     private void SaveFinalScore()
     {
-        int finalScore = ScoreManager.Instance.CurrentScore;
-        HighScoreManager.Instance.AddScore(finalScore);
+        if (ScoreManager.Instance != null && HighScoreManager.Instance != null)
+        {
+            int finalScore = ScoreManager.Instance.CurrentScore;
+            HighScoreManager.Instance.AddScore(finalScore);
+        }
     }
 
     public void QuitGame()
@@ -128,9 +146,6 @@ public class GameManager : Singleton<GameManager>
     }
 }
 
-/// <summary>
-/// États possibles du jeu.
-/// </summary>
 public enum GameState
 {
     MainMenu,

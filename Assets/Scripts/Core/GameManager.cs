@@ -3,7 +3,6 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Singleton central qui gère l'état du jeu, les transitions et l'initialisation des managers.
-/// Persiste entre les scènes via DontDestroyOnLoad.
 /// </summary>
 public class GameManager : Singleton<GameManager>
 {
@@ -14,24 +13,19 @@ public class GameManager : Singleton<GameManager>
     public GameState CurrentState => _currentState;
     public bool IsPaused => _isPaused;
 
-    // Événements
     public System.Action<GameState> OnGameStateChanged;
     public System.Action OnGamePaused;
     public System.Action OnGameResumed;
 
     protected override void Awake()
     {
-        // 1. On se détache de tout parent pour autoriser DontDestroyOnLoad
         if (transform.parent != null)
         {
             transform.SetParent(null);
         }
 
-        // 2. Initialisation du Singleton (Gère les doublons)
-        base.Awake(); 
+        base.Awake();
 
-        // 3. Persistance (Note: base.Awake() le fait déjà si ton Singleton est bien codé, 
-        // mais on le sécurise ici si besoin)
         if (transform.parent == null)
         {
             DontDestroyOnLoad(gameObject);
@@ -40,13 +34,9 @@ public class GameManager : Singleton<GameManager>
 
     private void Start()
     {
-        // Utilisation du Null Check (?.) pour éviter l'erreur si SettingsManager n'est pas encore prêt
         SettingsManager.Instance?.LoadSettings();
     }
 
-    // -----------------------------
-    // Gestion des états du jeu
-    // -----------------------------
     public void SetGameState(GameState newState)
     {
         if (_currentState == newState) return;
@@ -74,30 +64,40 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
-    // -----------------------------
-    // Transitions
-    // -----------------------------
     public void StartNewGame()
     {
-        // Utilisation systématique de ?. pour éviter les NullReferenceException au démarrage
-        ScoreManager.Instance?.ResetScore();
-        // ThreatManager.Instance?.ResetThreat(); // Commenté si non présent
-        // PhaseManager.Instance?.ResetPhases(); // Commenté si non présent
-
+        // ⭐ CORRIGÉ - Vérifier le tutoriel
+        if (SettingsManager.Instance != null && SettingsManager.Instance.ShowTutorial)
+        {
+            StartTutorial();
+            return;
+        }
+        
+        ResetAllManagers();
         SetGameState(GameState.Playing);
         SceneManager.LoadScene("Gameplay");
     }
 
     public void StartTutorial()
     {
+        ResetAllManagers();
         SetGameState(GameState.Tutorial);
         SceneManager.LoadScene("Tutorial");
+    }
+    
+    /// <summary>
+    /// ⭐ MÉTHODE AJOUTÉE - Reset tous les managers
+    /// </summary>
+    private void ResetAllManagers()
+    {
+        ScoreManager.Instance?.ResetScore();
+        ThreatManager.Instance?.ResetThreat();
+        PhaseManager.Instance?.ResetPhases();
     }
 
     public void PauseGame()
     {
         if (_currentState != GameState.Playing) return;
-
         SetGameState(GameState.Paused);
         OnGamePaused?.Invoke();
     }
@@ -105,13 +105,13 @@ public class GameManager : Singleton<GameManager>
     public void ResumeGame()
     {
         if (_currentState != GameState.Paused) return;
-
         SetGameState(GameState.Playing);
         OnGameResumed?.Invoke();
     }
 
     public void ReturnToMainMenu()
     {
+        Time.timeScale = 1f; // ⭐ AJOUTÉ - Reset timescale
         SetGameState(GameState.MainMenu);
         SceneManager.LoadScene("MainMenu");
     }
@@ -122,9 +122,6 @@ public class GameManager : Singleton<GameManager>
         SceneManager.LoadScene("GameOver");
     }
 
-    // -----------------------------
-    // Score & Quit
-    // -----------------------------
     private void SaveFinalScore()
     {
         if (ScoreManager.Instance != null && HighScoreManager.Instance != null)
@@ -144,13 +141,4 @@ public class GameManager : Singleton<GameManager>
         Application.Quit();
 #endif
     }
-}
-
-public enum GameState
-{
-    MainMenu,
-    Tutorial,
-    Playing,
-    Paused,
-    GameOver
 }

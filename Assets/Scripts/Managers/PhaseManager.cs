@@ -25,13 +25,15 @@ public class PhaseManager : Singleton<PhaseManager>
     public System.Action<TrackPhase> OnPhaseChanged;
     public TrackPhase CurrentPhase => _currentPhase;
 
-
-    // ---------------------------------------------------------
-    // INITIALISATION
-    // ---------------------------------------------------------
     protected override void Awake()
     {
-        base.Awake(); // ← Initialise le Singleton
+        // 1. Sortir du parent pour autoriser DontDestroyOnLoad (comme GameManager)
+        if (transform.parent != null)
+        {
+            transform.SetParent(null);
+        }
+
+        base.Awake(); 
 
         if (_mainCamera == null)
             _mainCamera = Camera.main;
@@ -42,23 +44,24 @@ public class PhaseManager : Singleton<PhaseManager>
         SetPhase(TrackPhase.Green);
     }
 
-
-    // ---------------------------------------------------------
-    // UPDATE
-    // ---------------------------------------------------------
     private void Update()
     {
-        if (GameManager.Instance.CurrentState != GameState.Playing)
+        if (GameManager.Instance == null) return;
+
+        // MODIFICATION : On autorise la mise à jour visuelle (FOV) même en Tutorial
+        GameState state = GameManager.Instance.CurrentState;
+        if (state != GameState.Playing && state != GameState.Tutorial)
             return;
 
-        UpdatePhaseTimer();
+        // On n'avance le timer que si on est en train de jouer (pas en tutorial)
+        if (state == GameState.Playing)
+        {
+            UpdatePhaseTimer();
+        }
+
         UpdateCameraFOV();
     }
 
-
-    // ---------------------------------------------------------
-    // PHASE LOGIC
-    // ---------------------------------------------------------
     private void UpdatePhaseTimer()
     {
         _phaseTimer += Time.deltaTime;
@@ -77,18 +80,15 @@ public class PhaseManager : Singleton<PhaseManager>
             TrackPhase.Green => TrackPhase.Blue,
             TrackPhase.Blue => TrackPhase.Red,
             TrackPhase.Red => TrackPhase.Black,
-            TrackPhase.Black => TrackPhase.Black, // Reste en noir
+            TrackPhase.Black => TrackPhase.Black,
             _ => TrackPhase.Green
         };
 
         SetPhase(nextPhase);
     }
 
-    private void SetPhase(TrackPhase newPhase)
+    public void SetPhase(TrackPhase newPhase)
     {
-        if (_currentPhase == newPhase && newPhase != TrackPhase.Green)
-            return;
-
         _currentPhase = newPhase;
 
         _targetFOV = newPhase switch
@@ -101,15 +101,14 @@ public class PhaseManager : Singleton<PhaseManager>
         };
 
         OnPhaseChanged?.Invoke(newPhase);
-        AudioManager.Instance?.PlaySFX("Tududum");
+        
+        // Petit check pour éviter le son au tout début du jeu si nécessaire
+        if (Time.timeSinceLevelLoad > 0.1f)
+            AudioManager.Instance?.PlaySFX("Tududum");
 
         Debug.Log($"[PhaseManager] Phase changée : {newPhase}, FOV cible : {_targetFOV}");
     }
 
-
-    // ---------------------------------------------------------
-    // CAMERA FOV TRANSITION
-    // ---------------------------------------------------------
     private void UpdateCameraFOV()
     {
         if (_mainCamera == null) return;
@@ -121,25 +120,9 @@ public class PhaseManager : Singleton<PhaseManager>
         );
     }
 
-
-    // ---------------------------------------------------------
-    // RESET
-    // ---------------------------------------------------------
     public void ResetPhases()
     {
         _phaseTimer = 0f;
         SetPhase(TrackPhase.Green);
     }
-}
-
-
-// ---------------------------------------------------------
-// ENUM
-// ---------------------------------------------------------
-public enum TrackPhase
-{
-    Green,
-    Blue,
-    Red,
-    Black
 }

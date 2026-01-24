@@ -1,3 +1,5 @@
+using UnityEngine;
+
 /// <summary>
 /// Énumérations centrales du jeu.
 /// CE FICHIER EST LA SEULE SOURCE DE VÉRITÉ POUR LES ENUMS.
@@ -9,7 +11,7 @@
 public enum GameState
 {
     MainMenu,
-    Tutorial,      // ⭐ AJOUTÉ
+    Tutorial,
     Playing,
     Paused,
     GameOver
@@ -24,4 +26,27 @@ public enum TrackPhase
     Blue,   // Bleue : 10 m/s, 60-120s
     Red,    // Rouge : 15 m/s, 120-180s
     Black   // Noire : 20 m/s, 180s+
+}
+
+/// <summary>
+/// Types de segments de piste.
+/// </summary>
+public enum ChunkType
+{
+    Tutorial,   // Chunks simples pour le tutorial
+    Normal,     // Chunks standard
+    Transition, // Chunks de transition entre phases
+    Boss        // Chunks spéciaux
+}
+
+/// <summary>
+/// Difficulté du segment.
+/// </summary>
+public enum ChunkDifficulty
+{
+    Easy,
+    Medium,
+    Hard,
+    VeryHard,
+    Extreme
 }

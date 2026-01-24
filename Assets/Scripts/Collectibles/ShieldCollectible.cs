@@ -1,22 +1,22 @@
 using UnityEngine;
 
-/// <summary>
-/// Collectible Cadeau : donne un bouclier qui absorbe la prochaine collision.
-/// </summary>
 public class ShieldCollectible : CollectibleBase
 {
     protected override void ApplyEffect()
     {
-        // Nouvelle API Unity (remplace FindObjectOfType)
+        // On cherche le composant de collision sur le joueur
         PlayerCollision playerCollision = FindFirstObjectByType<PlayerCollision>();
 
         if (playerCollision != null)
         {
             playerCollision.ActivateShield();
+            // Le son est normalement déjà géré dans PlayerCollision ou ici, 
+            // vérifie de ne pas le jouer deux fois.
+            AudioManager.Instance?.PlaySFX("OhOh");
         }
-
-        AudioManager.Instance?.PlaySFX("OhOh");
-
-        Debug.Log("[ShieldCollectible] Bouclier activé !");
+        else 
+        {
+            Debug.LogWarning("[ShieldCollectible] PlayerCollision non trouvé !");
+        }
     }
 }

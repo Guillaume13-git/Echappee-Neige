@@ -1630,8 +1630,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5252688ff5c40294d869c4025f36e79a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  _laneDistance: 1
-  _laneChangeSpeed: 10
+  _laneDistance: 2
+  _laneChangeSpeed: 15
   _baseSpeed: 3
   _normalHeight: 2
   _crouchHeight: 1
@@ -1640,7 +1640,6 @@ MonoBehaviour:
   _cameraNormalY: 0.8
   _cameraCrouchY: 0.3
   _snowplowSpeedReduction: 4
-  _controller: {fileID: 1763089183}
 --- !u!143 &1763089183
 CharacterController:
   m_ObjectHideFlags: 0

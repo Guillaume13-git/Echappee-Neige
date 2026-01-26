@@ -1,8 +1,7 @@
-using UnityEngine;
-
 /// <summary>
-/// Énumérations centrales du jeu.
-/// CE FICHIER EST LA SEULE SOURCE DE VÉRITÉ POUR LES ENUMS.
+/// Énumérations centrales du jeu Échappée-Neige.
+/// CE FICHIER EST LA SEULE SOURCE DE VÉRITÉ POUR TOUS LES ENUMS.
+/// EMPLACEMENT : Assets/Scripts/Core/GameEnums.cs
 /// </summary>
 
 /// <summary>
@@ -29,18 +28,18 @@ public enum TrackPhase
 }
 
 /// <summary>
-/// Types de segments de piste.
+/// Type de chunk selon son usage.
 /// </summary>
 public enum ChunkType
 {
     Tutorial,   // Chunks simples pour le tutorial
     Normal,     // Chunks standard
     Transition, // Chunks de transition entre phases
-    Boss        // Chunks spéciaux
+    Boss        // Chunks spéciaux (futurs updates)
 }
 
 /// <summary>
-/// Difficulté du segment.
+/// Difficulté du chunk.
 /// </summary>
 public enum ChunkDifficulty
 {

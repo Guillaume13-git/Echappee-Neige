@@ -5,8 +5,8 @@ using UnityEngine.SceneManagement;
 using System.Collections;
 
 /// <summary>
-/// Gère le tutoriel du jeu.
-/// Guide le joueur à travers 3 étapes : déplacement latéral, évitement et accroupissement.
+/// Gère le tutoriel du jeu Échappée-Neige.
+/// Guide le joueur à travers ses actions sans variables de stockage inutiles.
 /// </summary>
 public class TutorialManager : MonoBehaviour
 {
@@ -16,84 +16,86 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _progressText;
     [SerializeField] private Button _skipButton;
 
-    [Header("Tutorial Objects (Obstacles)")]
-    [SerializeField] private GameObject _obstacleLane;
-    [SerializeField] private GameObject _obstacleCrouch;
-
-    [Header("Thresholds (Z Position)")]
-    [SerializeField] private float _laneObstacleZ = 50f;
-    [SerializeField] private float _crouchObstacleZ = 90f;
-    [SerializeField] private float _finishZ = 130f;
-
     [Header("Player Reference")]
-    [SerializeField] private Transform _playerTransform;
+    [SerializeField] private PlayerController _player;
 
+    [Header("Tutorial Speed")]
+    [SerializeField] private float _tutorialSpeed = 5f;
+    [SerializeField] private ChunkMover _chunkMover;
+
+    [Header("Debug")]
+    [SerializeField] private bool _showDebugLogs = true;
+
+    // État du tutoriel
     private int _currentStep = 0;
     private bool _tutorialCompleted = false;
 
+    // Instructions
     private readonly string[] _instructions = new string[]
     {
         "Bienvenue ! Utilisez ← et → (ou Q et D) pour changer de couloir.",
-        "Bien ! Maintenant évitez cet obstacle en changeant de couloir.",
-        "Parfait ! Utilisez ↓ ou Shift pour vous baisser sous cet obstacle.",
-        "Excellent ! Vous êtes prêt. Bonne chance !"
+        "Bien joué ! Maintenant évitez les obstacles en changeant de couloir.",
+        "Parfait ! Utilisez ↓ ou Shift pour vous baisser sous les obstacles hauts.",
+        "Excellent ! Vous êtes prêt. Bonne chance dans la descente !"
     };
 
     private void Start()
     {
-        Debug.Log("[TutorialManager] Initialisation");
+        // 1. Récupération des références
+        if (_player == null) _player = FindFirstObjectByType<PlayerController>();
+        if (_chunkMover == null) _chunkMover = FindFirstObjectByType<ChunkMover>();
 
-        // Configuration initiale de l'UI
-        if (_skipButton != null) _skipButton.onClick.AddListener(OnSkipClicked);
-        if (_tutorialPanel != null) _tutorialPanel.SetActive(true);
+        // 2. Configuration ChunkMover
+        if (_chunkMover != null)
+        {
+            _chunkMover.SetSpeed(_tutorialSpeed);
+        }
 
-        // Masquer les obstacles au départ
-        if (_obstacleLane != null) _obstacleLane.SetActive(false);
-        if (_obstacleCrouch != null) _obstacleCrouch.SetActive(false);
+        // 3. Configuration UI
+        if (_skipButton != null)
+            _skipButton.onClick.AddListener(OnSkipClicked);
 
-        // Ralentir légèrement pour l'apprentissage
-        Time.timeScale = 0.7f;
+        if (_tutorialPanel != null)
+            _tutorialPanel.SetActive(true);
+
+        // 4. État initial
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetGameState(GameState.Tutorial);
+        }
+
+        if (_showDebugLogs) Debug.Log("[TutorialManager] 🎓 Session de tutoriel démarrée.");
 
         ShowStep(0);
     }
 
     private void Update()
     {
-        if (_tutorialCompleted || _playerTransform == null) return;
-
+        if (_tutorialCompleted || _player == null) return;
         CheckStepCompletion();
     }
 
-    /// <summary>
-    /// Affiche les instructions et active les objets selon l'étape.
-    /// </summary>
     private void ShowStep(int stepIndex)
     {
         _currentStep = stepIndex;
 
-        // Mise à jour Textes
-        if (_instructionText != null) _instructionText.text = _instructions[stepIndex];
-        if (_progressText != null) _progressText.text = $"Étape {Mathf.Min(stepIndex + 1, 3)} / 3";
+        if (_instructionText != null)
+            _instructionText.text = _instructions[stepIndex];
 
-        // Activation séquentielle des obstacles
-        if (stepIndex == 1 && _obstacleLane != null) _obstacleLane.SetActive(true);
-        if (stepIndex == 2 && _obstacleCrouch != null) _obstacleCrouch.SetActive(true);
+        if (_progressText != null)
+        {
+            int displayStep = Mathf.Min(stepIndex + 1, 3);
+            _progressText.text = $"Étape {displayStep} / 3";
+        }
 
-        // Petit feedback sonore
-        AudioManager.Instance?.PlaySFX("Blip"); 
+        AudioManager.Instance?.PlaySFX("Blip");
     }
 
-    /// <summary>
-    /// Logique de validation des étapes.
-    /// </summary>
     private void CheckStepCompletion()
     {
-        float playerZ = _playerTransform.position.z;
-
         switch (_currentStep)
         {
-            case 0:
-                // Étape 1 : Le joueur doit juste presser une touche de direction
+            case 0: // Changer de couloir
                 if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow) ||
                     Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.D))
                 {
@@ -101,39 +103,56 @@ public class TutorialManager : MonoBehaviour
                 }
                 break;
 
-            case 1:
-                // Étape 2 : Le joueur doit avoir dépassé l'obstacle au sol
-                if (playerZ > _laneObstacleZ)
+            case 1: // Sauter
+                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow))
                 {
-                    NextStep();
+                    StartCoroutine(DelayedNextStep(1.2f));
                 }
                 break;
 
-            case 2:
-                // Étape 3 : Le joueur doit avoir dépassé la barrière haute
-                if (playerZ > _crouchObstacleZ)
+            case 2: // S'accroupir
+                if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.S))
                 {
-                    NextStep();
+                    StartCoroutine(DelayedNextStep(1.2f));
                 }
                 break;
 
-            case 3:
-                // Fin : Le joueur atteint la zone de fin du tuto
-                if (playerZ > _finishZ)
+            case 3: // Fin / Prêt
+                if (!_tutorialCompleted)
                 {
-                    CompleteTutorial();
+                    StartCoroutine(AutoCompleteTutorial(2f));
                 }
                 break;
         }
     }
 
-    public void NextStep()
+    private IEnumerator DelayedNextStep(float delay)
+    {
+        int currentProcessingStep = _currentStep;
+        yield return new WaitForSeconds(delay);
+        
+        if (_currentStep == currentProcessingStep)
+        {
+            NextStep();
+        }
+    }
+
+    private void NextStep()
     {
         _currentStep++;
+        
+        if (_showDebugLogs) Debug.Log($"[TutorialManager] Étape complétée. Nouvelle étape : {_currentStep}");
+
         if (_currentStep < _instructions.Length)
-        {
             ShowStep(_currentStep);
-        }
+        else
+            CompleteTutorial();
+    }
+
+    private IEnumerator AutoCompleteTutorial(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        CompleteTutorial();
     }
 
     private void CompleteTutorial()
@@ -141,38 +160,40 @@ public class TutorialManager : MonoBehaviour
         if (_tutorialCompleted) return;
         _tutorialCompleted = true;
 
-        Debug.Log("[TutorialManager] Tutoriel Réussi");
+        if (_chunkMover != null)
+            _chunkMover.ReleaseForcedSpeed();
 
-        // Sauvegarde de l'état
-        SettingsManager.Instance?.SetShowTutorial(false);
+        if (_instructionText != null)
+            _instructionText.text = "Génial ! C'est parti pour la descente !";
 
-        if (_instructionText != null) _instructionText.text = "Génial ! C'est parti !";
-        
+        if (_showDebugLogs) Debug.Log("[TutorialManager] 🎉 Tutoriel terminé avec succès.");
+
+        AudioManager.Instance?.PlaySFX("Victory");
         StartCoroutine(FinishRoutine());
     }
 
     private IEnumerator FinishRoutine()
     {
-        yield return new WaitForSecondsRealtime(1.5f);
-        Time.timeScale = 1f;
+        yield return new WaitForSecondsRealtime(2.5f);
         LoadGameplay();
     }
 
     private void OnSkipClicked()
     {
-        SettingsManager.Instance?.SetShowTutorial(false);
-        Time.timeScale = 1f;
+        if (_showDebugLogs) Debug.Log("[TutorialManager] ⏭️ Tutoriel passé par l'utilisateur.");
+        if (_chunkMover != null) _chunkMover.ReleaseForcedSpeed();
         LoadGameplay();
     }
 
     private void LoadGameplay()
     {
+        SettingsManager.Instance?.SetShowTutorial(false);
         SceneManager.LoadScene("Gameplay");
     }
 
     private void OnDestroy()
     {
-        // Sécurité pour ne pas laisser le jeu au ralenti
-        Time.timeScale = 1f;
+        if (_skipButton != null)
+            _skipButton.onClick.RemoveListener(OnSkipClicked);
     }
 }

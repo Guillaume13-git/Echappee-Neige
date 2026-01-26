@@ -13,6 +13,10 @@ public class GameManager : Singleton<GameManager>
     public GameState CurrentState => _currentState;
     public bool IsPaused => _isPaused;
 
+    // ⭐ PROPRIÉTÉ AJOUTÉE : Permet aux autres scripts de vérifier si on peut jouer
+    // Retourne vrai si on est en jeu (Playing) ou en tutoriel
+    public bool IsGameActive => _currentState == GameState.Playing || _currentState == GameState.Tutorial;
+
     public System.Action<GameState> OnGameStateChanged;
     public System.Action OnGamePaused;
     public System.Action OnGameResumed;
@@ -66,7 +70,6 @@ public class GameManager : Singleton<GameManager>
 
     public void StartNewGame()
     {
-        // ⭐ CORRIGÉ - Vérifier le tutoriel
         if (SettingsManager.Instance != null && SettingsManager.Instance.ShowTutorial)
         {
             StartTutorial();
@@ -85,9 +88,6 @@ public class GameManager : Singleton<GameManager>
         SceneManager.LoadScene("Tutorial");
     }
     
-    /// <summary>
-    /// ⭐ MÉTHODE AJOUTÉE - Reset tous les managers
-    /// </summary>
     private void ResetAllManagers()
     {
         ScoreManager.Instance?.ResetScore();
@@ -111,7 +111,7 @@ public class GameManager : Singleton<GameManager>
 
     public void ReturnToMainMenu()
     {
-        Time.timeScale = 1f; // ⭐ AJOUTÉ - Reset timescale
+        Time.timeScale = 1f;
         SetGameState(GameState.MainMenu);
         SceneManager.LoadScene("MainMenu");
     }

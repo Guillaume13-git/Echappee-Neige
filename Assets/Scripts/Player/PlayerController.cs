@@ -4,18 +4,32 @@ using System.Collections;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Lane Movement")]
-    [SerializeField] private float _laneDistance = 2.0f; 
+    [Header("Lane System")]
+    [SerializeField] private float _laneDistance = 1.84f; 
     [SerializeField] private float _laneChangeSpeed = 15f;
-    private int _currentLane = 2; // 1 = Gauche, 2 = Centre, 3 = Droite
+    private int _currentLaneIndex = 1; // 0: Gauche, 1: Centre, 2: Droite
     private float _targetXPosition = 0f;
     
-    [Header("Forward Movement")]
-    [SerializeField] private float _baseSpeed = 5f;
-    private float _currentSpeed;
+    // Propriétés de calcul pour la clarté
+    private float _leftLaneX => -_laneDistance;
+    private float _centerLaneX => 0f;
+    private float _rightLaneX => _laneDistance;
+
+    [Header("Forward Movement (World Logic)")]
+    [SerializeField] private float _baseSpeed = 12f;
+    private float _currentBaseSpeed; // Vitesse de base actuelle (change selon la phase)
     private float _speedMultiplier = 1f;
+
+    [Header("Physics")]
+    [SerializeField] private float _gravity = -30f;
+    private float _verticalVelocity;
+    private bool _isGrounded;
     
-    [Header("Crouch")]
+    [Header("Slowdown (Chasse-Neige)")]
+    [SerializeField] private float _slowdownMultiplier = 0.6f;
+    private bool _isSlowingDown = false;
+
+    [Header("Crouch & Visuals")]
     [SerializeField] private float _normalHeight = 2f;
     [SerializeField] private float _crouchHeight = 1f;
     [SerializeField] private float _crouchSpeed = 10f;
@@ -23,22 +37,29 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float _cameraNormalY = 0.8f;
     [SerializeField] private float _cameraCrouchY = 0.3f;
     private bool _isCrouching = false;
-    
-    [Header("Snowplow (Slow)")]
-    [SerializeField] private float _snowplowSpeedReduction = 4f;
-    private bool _isSnowplowing = false;
-    
-    private CharacterController _controller;
-    
-    public bool IsAccelerated { get; private set; } = false;
-    public float CurrentSpeed => _currentSpeed * _speedMultiplier;
 
-    private void Awake() => _controller = GetComponent<CharacterController>();
-    
+    private CharacterController _controller;
+    private Vector3 _moveDirection;
+
+    public bool IsAccelerated { get; private set; } = false;
+
+    private void Awake() 
+    {
+        _controller = GetComponent<CharacterController>();
+        if (_cameraTransform == null) _cameraTransform = Camera.main?.transform;
+    }
+
     private void Start()
     {
-        _currentSpeed = _baseSpeed;
-        UpdateLanePosition();
+        _currentBaseSpeed = _baseSpeed;
+        _currentLaneIndex = 1;
+        _targetXPosition = _centerLaneX;
+        
+        // Positionnement initial
+        Vector3 startPos = transform.position;
+        startPos.x = _centerLaneX;
+        startPos.z = 0f; // On s'assure de démarrer à 0
+        transform.position = startPos;
 
         if (PhaseManager.Instance != null)
             PhaseManager.Instance.OnPhaseChanged += UpdateSpeedForPhase;
@@ -49,111 +70,88 @@ public class PlayerController : MonoBehaviour
         if (PhaseManager.Instance != null)
             PhaseManager.Instance.OnPhaseChanged -= UpdateSpeedForPhase;
     }
-    
+
     private void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return;
-        
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing)
+            return;
+
         HandleInput();
         ApplyMovement();
         UpdateCrouchHeight();
-        HandleSnowplow();
     }
-    
+
     private void HandleInput()
     {
-        // GAUCHE (Q ou Flèche Gauche)
         if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.Q)) 
-        {
-            Debug.Log("[Player] Touche Gauche détectée");
-            ChangeLane(-1);
-        }
-        // DROITE (D ou Flèche Droite)
+            MoveLane(-1);
         else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) 
-        {
-            Debug.Log("[Player] Touche Droite détectée");
-            ChangeLane(1);
-        }
-        
-        // S'ACCROUPIR (Shift Gauche ou Flèche Bas)
-        _isCrouching = Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.LeftShift);
-        
-        // RALENTIR / CHASSE-NEIGE (Espace)
-        _isSnowplowing = Input.GetKey(KeyCode.Space) && !IsAccelerated;
-    }
-    
-    private void ChangeLane(int direction)
-    {
-        int newLane = Mathf.Clamp(_currentLane + direction, 1, 3);
-        if (newLane == _currentLane) return;
+            MoveLane(1);
 
-        _currentLane = newLane;
-        UpdateLanePosition();
+        _isCrouching = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S);
+        _isSlowingDown = Input.GetKey(KeyCode.Space);
+    }
+
+    private void MoveLane(int direction)
+    {
+        int previousLane = _currentLaneIndex;
+        _currentLaneIndex = Mathf.Clamp(_currentLaneIndex + direction, 0, 2);
+
+        if (previousLane == _currentLaneIndex) return;
+
+        _targetXPosition = _currentLaneIndex switch
+        {
+            0 => _leftLaneX,
+            1 => _centerLaneX,
+            2 => _rightLaneX,
+            _ => 0f
+        };
+
         AudioManager.Instance?.PlaySFX("Whoosh");
     }
-    
-    private void UpdateLanePosition() => _targetXPosition = (_currentLane - 2) * _laneDistance;
 
     private void ApplyMovement()
     {
-        // 1. Calcul latéral (X)
-        float newX = Mathf.Lerp(transform.position.x, _targetXPosition, Time.deltaTime * _laneChangeSpeed);
-        float xMovement = newX - transform.position.x;
+        _isGrounded = _controller.isGrounded;
 
-        // 2. Calcul frontal (Z)
-        float zMovement = (_currentSpeed * _speedMultiplier) * Time.deltaTime;
+        // 1. MOUVEMENT LATÉRAL (X)
+        float currentX = transform.position.x;
+        float nextX = Mathf.MoveTowards(currentX, _targetXPosition, _laneChangeSpeed * Time.deltaTime);
+        float xVelocity = (nextX - currentX) / Time.deltaTime;
 
-        // 3. Application au CharacterController
-        // On ajoute un peu de gravité (-9.81) pour que le joueur reste au sol
-        Vector3 moveVector = new Vector3(xMovement, -9.81f * Time.deltaTime, zMovement);
-        _controller.Move(moveVector);
+        // 2. PHYSIQUE (Y)
+        if (_isGrounded && _verticalVelocity < 0) _verticalVelocity = -2f;
+        _verticalVelocity += _gravity * Time.deltaTime;
+
+        // 3. APPLICATION DU MOUVEMENT
+        // On met 0 en Z : le joueur ne bouge plus physiquement vers l'avant.
+        // C'est le ChunkMover qui lira la vitesse via GetCurrentForwardSpeed().
+        _moveDirection = new Vector3(xVelocity, _verticalVelocity, 0f); 
+        _controller.Move(_moveDirection * Time.deltaTime);
     }
 
-    private void UpdateCrouchHeight()
+    /// <summary>
+    /// Retourne la vitesse actuelle calculée (Base * Multiplicateurs).
+    /// Utilisée par le ChunkMover pour déplacer le décor.
+    /// </summary>
+    public float GetCurrentForwardSpeed()
     {
-        float targetH = _isCrouching ? _crouchHeight : _normalHeight;
-        float targetCamY = _isCrouching ? _cameraCrouchY : _cameraNormalY;
+        float finalMultiplier = _speedMultiplier;
         
-        _controller.height = Mathf.Lerp(_controller.height, targetH, Time.deltaTime * _crouchSpeed);
-        
-        if (_cameraTransform != null)
+        // Ralentissement uniquement si on n'est pas en boost
+        if (_isSlowingDown && !IsAccelerated)
         {
-            Vector3 camPos = _cameraTransform.localPosition;
-            camPos.y = Mathf.Lerp(camPos.y, targetCamY, Time.deltaTime * _crouchSpeed);
-            _cameraTransform.localPosition = camPos;
+            finalMultiplier *= _slowdownMultiplier;
         }
+        
+        return _currentBaseSpeed * finalMultiplier;
     }
 
-    private void HandleSnowplow()
-    {
-        if (_isSnowplowing)
-        {
-            float reduced = Mathf.Max(_currentSpeed - _snowplowSpeedReduction, 1f);
-            _speedMultiplier = reduced / _currentSpeed;
-            ThreatManager.Instance?.SetSnowplowActive(true);
-        }
-        else if (!IsAccelerated)
-        {
-            _speedMultiplier = 1f;
-            ThreatManager.Instance?.SetSnowplowActive(false);
-        }
-    }
-
+    #region Speed Boost logic
     public void ActivateSpeedBoost(float duration)
     {
-        StopCoroutine(nameof(SpeedBoostCoroutine)); 
+        StopCoroutine(nameof(SpeedBoostCoroutine));
         StartCoroutine(SpeedBoostCoroutine(duration));
-    }
-
-    private IEnumerator SpeedBoostCoroutine(float duration)
-    {
-        IsAccelerated = true;
-        _speedMultiplier = 4f;
-        ThreatManager.Instance?.SetSpeedBoostActive(true);
-        yield return new WaitForSeconds(duration);
-        _speedMultiplier = 1f;
-        IsAccelerated = false;
-        ThreatManager.Instance?.SetSpeedBoostActive(false);
     }
 
     public void StopSpeedBoost()
@@ -164,15 +162,49 @@ public class PlayerController : MonoBehaviour
         ThreatManager.Instance?.SetSpeedBoostActive(false);
     }
 
+    private IEnumerator SpeedBoostCoroutine(float duration)
+    {
+        IsAccelerated = true;
+        _speedMultiplier = 2.5f;
+        ThreatManager.Instance?.SetSpeedBoostActive(true);
+        yield return new WaitForSeconds(duration);
+        _speedMultiplier = 1f;
+        IsAccelerated = false;
+        ThreatManager.Instance?.SetSpeedBoostActive(false);
+    }
+    #endregion
+
+    private void UpdateCrouchHeight()
+    {
+        float targetH = _isCrouching ? _crouchHeight : _normalHeight;
+        float targetCamY = _isCrouching ? _cameraCrouchY : _cameraNormalY;
+
+        _controller.height = Mathf.Lerp(_controller.height, targetH, Time.deltaTime * _crouchSpeed);
+
+        if (_cameraTransform != null)
+        {
+            Vector3 camPos = _cameraTransform.localPosition;
+            camPos.y = Mathf.Lerp(camPos.y, targetCamY, Time.deltaTime * _crouchSpeed);
+            _cameraTransform.localPosition = camPos;
+        }
+    }
+
     private void UpdateSpeedForPhase(TrackPhase phase)
     {
-        _baseSpeed = phase switch {
-            TrackPhase.Green => 5f,
-            TrackPhase.Blue => 10f,
-            TrackPhase.Red => 15f,
-            TrackPhase.Black => 20f,
-            _ => 5f
+        _currentBaseSpeed = phase switch {
+            TrackPhase.Green => 12f,
+            TrackPhase.Blue => 15f,
+            TrackPhase.Red => 20f,
+            TrackPhase.Black => 25f,
+            _ => 12f
         };
-        _currentSpeed = _baseSpeed;
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawLine(new Vector3(-_laneDistance, 0, -5), new Vector3(-_laneDistance, 0, 20));
+        Gizmos.DrawLine(new Vector3(0, 0, -5), new Vector3(0, 0, 20));
+        Gizmos.DrawLine(new Vector3(_laneDistance, 0, -5), new Vector3(_laneDistance, 0, 20));
     }
 }

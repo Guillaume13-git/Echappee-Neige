@@ -4,6 +4,7 @@ using System.Linq;
 /// <summary>
 /// Composant attaché à chaque préfab de chunk.
 /// Contient les métadonnées pour la sélection et le placement.
+/// EMPLACEMENT : Assets/Scripts/Track/ChunkData.cs
 /// </summary>
 public class ChunkData : MonoBehaviour
 {
@@ -14,7 +15,7 @@ public class ChunkData : MonoBehaviour
     [SerializeField] private ChunkType _chunkType = ChunkType.Normal;
     [SerializeField] private ChunkDifficulty _difficulty = ChunkDifficulty.Easy;
     
-    [Header("Content Info (for debugging)")]
+    [Header("Content Info (auto-calculated)")]
     [SerializeField] private int _obstacleCount = 0;
     [SerializeField] private int _collectibleCount = 0;
     
@@ -24,20 +25,23 @@ public class ChunkData : MonoBehaviour
     public TrackPhase RecommendedPhase => _recommendedPhase;
     public ChunkType Type => _chunkType;
     public ChunkDifficulty Difficulty => _difficulty;
+    public int ObstacleCount => _obstacleCount;
+    public int CollectibleCount => _collectibleCount;
     
     /// <summary>
     /// Appelé automatiquement quand tu modifies le prefab dans l'éditeur.
+    /// Compte les obstacles et collectibles.
     /// </summary>
     private void OnValidate()
     {
-        // On vérifie si on n'est pas en train de jouer pour éviter des calculs inutiles
+        // On ne calcule que dans l'éditeur, pas pendant le jeu
         if (Application.isPlaying) return;
 
-        // .Count() nécessite 'using System.Linq;'
+        // Compte les obstacles (Colliders avec tag "Obstacle")
         _obstacleCount = GetComponentsInChildren<Collider>()
             .Count(c => c.CompareTag("Obstacle"));
             
-        // Pour les collectibles, GetLength(0) ou .Length fonctionne sur un tableau
+        // Compte les collectibles
         var collectibles = GetComponentsInChildren<CollectibleBase>();
         _collectibleCount = collectibles != null ? collectibles.Length : 0;
     }

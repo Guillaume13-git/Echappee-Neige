@@ -1,23 +1,26 @@
 using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// Contrôleur du joueur mis à jour.
+/// Version corrigée avec la méthode StopSpeedBoost() pour corriger l'erreur CS1061.
+/// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Lane System")]
     [SerializeField] private float _laneDistance = 1.84f; 
     [SerializeField] private float _laneChangeSpeed = 15f;
-    private int _currentLaneIndex = 1; // 0: Gauche, 1: Centre, 2: Droite
+    private int _currentLaneIndex = 1; 
     private float _targetXPosition = 0f;
     
-    // Propriétés de calcul pour la clarté
     private float _leftLaneX => -_laneDistance;
     private float _centerLaneX => 0f;
     private float _rightLaneX => _laneDistance;
 
     [Header("Forward Movement (World Logic)")]
     [SerializeField] private float _baseSpeed = 12f;
-    private float _currentBaseSpeed; // Vitesse de base actuelle (change selon la phase)
+    private float _currentBaseSpeed; 
     private float _speedMultiplier = 1f;
 
     [Header("Physics")]
@@ -39,7 +42,6 @@ public class PlayerController : MonoBehaviour
     private bool _isCrouching = false;
 
     private CharacterController _controller;
-    private Vector3 _moveDirection;
 
     public bool IsAccelerated { get; private set; } = false;
 
@@ -55,11 +57,9 @@ public class PlayerController : MonoBehaviour
         _currentLaneIndex = 1;
         _targetXPosition = _centerLaneX;
         
-        // Positionnement initial
-        Vector3 startPos = transform.position;
-        startPos.x = _centerLaneX;
-        startPos.z = 0f; // On s'assure de démarrer à 0
-        transform.position = startPos;
+        _controller.enabled = false; 
+        transform.position = new Vector3(_centerLaneX, transform.position.y, 0f);
+        _controller.enabled = true;
 
         if (PhaseManager.Instance != null)
             PhaseManager.Instance.OnPhaseChanged += UpdateSpeedForPhase;
@@ -73,7 +73,9 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing)
+        if (GameManager.Instance != null && 
+            GameManager.Instance.CurrentState != GameState.Playing && 
+            GameManager.Instance.CurrentState != GameState.Tutorial)
             return;
 
         HandleInput();
@@ -114,52 +116,49 @@ public class PlayerController : MonoBehaviour
     {
         _isGrounded = _controller.isGrounded;
 
-        // 1. MOUVEMENT LATÉRAL (X)
         float currentX = transform.position.x;
         float nextX = Mathf.MoveTowards(currentX, _targetXPosition, _laneChangeSpeed * Time.deltaTime);
-        float xVelocity = (nextX - currentX) / Time.deltaTime;
+        float deltaX = nextX - currentX;
 
-        // 2. PHYSIQUE (Y)
         if (_isGrounded && _verticalVelocity < 0) _verticalVelocity = -2f;
         _verticalVelocity += _gravity * Time.deltaTime;
 
-        // 3. APPLICATION DU MOUVEMENT
-        // On met 0 en Z : le joueur ne bouge plus physiquement vers l'avant.
-        // C'est le ChunkMover qui lira la vitesse via GetCurrentForwardSpeed().
-        _moveDirection = new Vector3(xVelocity, _verticalVelocity, 0f); 
-        _controller.Move(_moveDirection * Time.deltaTime);
+        Vector3 move = new Vector3(deltaX, _verticalVelocity * Time.deltaTime, 0f);
+        _controller.Move(move);
+
+        if (transform.position.z != 0)
+        {
+            Vector3 pos = transform.position;
+            pos.z = 0;
+            transform.position = pos;
+        }
     }
 
-    /// <summary>
-    /// Retourne la vitesse actuelle calculée (Base * Multiplicateurs).
-    /// Utilisée par le ChunkMover pour déplacer le décor.
-    /// </summary>
     public float GetCurrentForwardSpeed()
     {
         float finalMultiplier = _speedMultiplier;
-        
-        // Ralentissement uniquement si on n'est pas en boost
-        if (_isSlowingDown && !IsAccelerated)
-        {
-            finalMultiplier *= _slowdownMultiplier;
-        }
-        
+        if (_isSlowingDown && !IsAccelerated) finalMultiplier *= _slowdownMultiplier;
         return _currentBaseSpeed * finalMultiplier;
     }
 
     #region Speed Boost logic
+
     public void ActivateSpeedBoost(float duration)
     {
         StopCoroutine(nameof(SpeedBoostCoroutine));
         StartCoroutine(SpeedBoostCoroutine(duration));
     }
 
+    /// <summary>
+    /// Méthode pour arrêter le boost manuellement (appelée par PlayerCollision).
+    /// </summary>
     public void StopSpeedBoost()
     {
         StopCoroutine(nameof(SpeedBoostCoroutine));
         IsAccelerated = false;
         _speedMultiplier = 1f;
         ThreatManager.Instance?.SetSpeedBoostActive(false);
+        if (_showDebugLogs) Debug.Log("[PlayerController] Boost arrêté prématurément.");
     }
 
     private IEnumerator SpeedBoostCoroutine(float duration)
@@ -172,6 +171,10 @@ public class PlayerController : MonoBehaviour
         IsAccelerated = false;
         ThreatManager.Instance?.SetSpeedBoostActive(false);
     }
+
+    [Header("Debug")]
+    [SerializeField] private bool _showDebugLogs = true;
+
     #endregion
 
     private void UpdateCrouchHeight()
@@ -180,6 +183,7 @@ public class PlayerController : MonoBehaviour
         float targetCamY = _isCrouching ? _cameraCrouchY : _cameraNormalY;
 
         _controller.height = Mathf.Lerp(_controller.height, targetH, Time.deltaTime * _crouchSpeed);
+        _controller.center = new Vector3(0, _controller.height / 2, 0);
 
         if (_cameraTransform != null)
         {

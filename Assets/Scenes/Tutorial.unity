@@ -658,6 +658,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: -5.7860107
       objectReference: {fileID: 0}
+    - target: {fileID: 831072227118946880, guid: d2d6dc9a9454db44888df75892796019, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.407
+      objectReference: {fileID: 0}
     - target: {fileID: 1974828192241967079, guid: d2d6dc9a9454db44888df75892796019, type: 3}
       propertyPath: near clip plane
       value: 0.1
@@ -674,6 +678,22 @@ PrefabInstance:
       propertyPath: _baseSpeed
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3437413653191362525, guid: d2d6dc9a9454db44888df75892796019, type: 3}
+      propertyPath: _crouchHeight
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3437413653191362525, guid: d2d6dc9a9454db44888df75892796019, type: 3}
+      propertyPath: _normalHeight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3437413653191362525, guid: d2d6dc9a9454db44888df75892796019, type: 3}
+      propertyPath: _cameraCrouchY
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3437413653191362525, guid: d2d6dc9a9454db44888df75892796019, type: 3}
+      propertyPath: _cameraTransform
+      value: 
+      objectReference: {fileID: 772410250}
     - target: {fileID: 6924706109375649964, guid: d2d6dc9a9454db44888df75892796019, type: 3}
       propertyPath: m_LocalRotation.w
       value: 1
@@ -1006,11 +1026,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4270439502802145803, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1
+      value: -1.029
       objectReference: {fileID: 0}
     - target: {fileID: 4270439502802145803, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.5
+      value: 0.168
       objectReference: {fileID: 0}
     - target: {fileID: 4270439502802145803, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1045,6 +1065,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+--- !u!4 &772410250 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6924706109375649964, guid: d2d6dc9a9454db44888df75892796019, type: 3}
+  m_PrefabInstance: {fileID: 539150965}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &830008517
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1264,8 +1289,8 @@ MonoBehaviour:
   _blackChunks: []
   _spawnParent: {fileID: 663437760}
   _visibleChunksCount: 5
-  _defaultChunkLength: 50
-  _recycleThresholdZ: -25
+  _defaultChunkLength: 25
+  _recycleThresholdZ: -3
   _playerTransform: {fileID: 1614905009}
   _isTutorialMode: 1
   _showDebugLogs: 1

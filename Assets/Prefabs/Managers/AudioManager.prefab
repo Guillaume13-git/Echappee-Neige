@@ -205,6 +205,8 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 57445ad37b674ce45a987643f112882d, type: 3}
   - name: Blip
     clip: {fileID: 8300000, guid: 9b5d4148734ad624ca26409fd2ca674d, type: 3}
+  - name: Victory
+    clip: {fileID: 8300000, guid: 6316ad3de9d634d4da9e91a68ac8173e, type: 3}
 --- !u!81 &399768825874800378
 AudioListener:
   m_ObjectHideFlags: 0

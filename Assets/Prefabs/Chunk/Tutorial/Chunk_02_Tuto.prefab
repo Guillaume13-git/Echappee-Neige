@@ -50,7 +50,7 @@ MonoBehaviour:
   _recommendedPhase: 0
   _chunkType: 0
   _difficulty: 0
-  _obstacleCount: 0
+  _obstacleCount: 4
   _collectibleCount: 0
 --- !u!1001 &25503695315654444
 PrefabInstance:
@@ -60,6 +60,54 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 834598447660025089}
     m_Modifications:
+    - target: {fileID: 1071657583909603548, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_TagString
+      value: Obstacle
+      objectReference: {fileID: 0}
+    - target: {fileID: 1712262163012667969, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000732289447254525, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_Name
+      value: Sapin
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000732289447254525, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_TagString
+      value: Obstacle
+      objectReference: {fileID: 0}
+    - target: {fileID: 3313088141998154915, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.789
+      objectReference: {fileID: 0}
+    - target: {fileID: 3705592753080664417, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.129
+      objectReference: {fileID: 0}
+    - target: {fileID: 3705592753080664417, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 3705592753080664417, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.12
+      objectReference: {fileID: 0}
+    - target: {fileID: 3841882313751496413, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4032147902009574593, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_TagString
+      value: Obstacle
+      objectReference: {fileID: 0}
+    - target: {fileID: 5143165613953616045, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_Name
+      value: Sapin (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5143165613953616045, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_TagString
+      value: Obstacle
+      objectReference: {fileID: 0}
     - target: {fileID: 5998863986689172802, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -100,9 +148,37 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6087126760674942355, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.129
+      objectReference: {fileID: 0}
+    - target: {fileID: 6087126760674942355, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.17
+      objectReference: {fileID: 0}
+    - target: {fileID: 6087126760674942355, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.093
+      objectReference: {fileID: 0}
+    - target: {fileID: 6460699046158161608, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6682828649276754335, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.5
+      objectReference: {fileID: 0}
     - target: {fileID: 7066520526324108666, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
       propertyPath: m_Name
       value: Ground_Middle
+      objectReference: {fileID: 0}
+    - target: {fileID: 8625965914963646734, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8689426502678357417, guid: 3009e164b5f9c2e4e8d4ae6b0b57967a, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

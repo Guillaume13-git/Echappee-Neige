@@ -17,6 +17,9 @@ public class PlayerCollision : MonoBehaviour
     [SerializeField] private Renderer[] _playerRenderers;
     [SerializeField] private float _blinkInterval = 0.1f;
     
+    [Header("Debug")]
+    [SerializeField] private bool _showDebugLogs = false;
+    
     private PlayerController _playerController;
 
     public bool HasShield => _hasShield;
@@ -25,8 +28,13 @@ public class PlayerCollision : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Sécurité GameManager
-        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return;
+        // Sécurité GameManager - Autoriser Tutorial ET Playing
+        if (GameManager.Instance != null && 
+            GameManager.Instance.CurrentState != GameState.Playing && 
+            GameManager.Instance.CurrentState != GameState.Tutorial) 
+        {
+            return;
+        }
 
         if (other.CompareTag("Collectible"))
         {
@@ -44,19 +52,26 @@ public class PlayerCollision : MonoBehaviour
     public void ActivateShield()
     {
         _hasShield = true;
-        // On peut ajouter ici un AudioManager.Instance?.PlaySFX("ShieldUp"); si besoin
-        Debug.Log("[PlayerCollision] Bouclier activé !");
+        AudioManager.Instance?.PlaySFX("ShieldUp");
+        if (_showDebugLogs) Debug.Log("[PlayerCollision] 🛡️ Bouclier activé !");
     }
 
     private void HandleObstacleCollision()
     {
-        if (_isInvulnerable) return;
+        if (_isInvulnerable) 
+        {
+            if (_showDebugLogs) Debug.Log("[PlayerCollision] Collision ignorée (invulnérable)");
+            return;
+        }
+
+        if (_showDebugLogs) Debug.Log("[PlayerCollision] 💥 Collision avec obstacle détectée !");
 
         // 1. Priorité au Bouclier
         if (_hasShield)
         {
             _hasShield = false;
             AudioManager.Instance?.PlaySFX("ShieldBreak");
+            if (_showDebugLogs) Debug.Log("[PlayerCollision] Bouclier brisé !");
             StartCoroutine(InvulnerabilityEffect());
             return;
         }
@@ -66,12 +81,23 @@ public class PlayerCollision : MonoBehaviour
         {
             _playerController.StopSpeedBoost();
             AudioManager.Instance?.PlaySFX("SpeedLost");
+            if (_showDebugLogs) Debug.Log("[PlayerCollision] Boost de vitesse perdu !");
             StartCoroutine(InvulnerabilityEffect());
             return;
         }
 
         // 3. Sinon : Dégâts normaux (Menace)
-        ThreatManager.Instance?.AddThreatFromCollision();
+        // Ne pas ajouter de menace pendant le tutoriel
+        if (GameManager.Instance == null || GameManager.Instance.CurrentState == GameState.Playing)
+        {
+            ThreatManager.Instance?.AddThreatFromCollision();
+            if (_showDebugLogs) Debug.Log("[PlayerCollision] Menace ajoutée !");
+        }
+        else if (_showDebugLogs)
+        {
+            Debug.Log("[PlayerCollision] Mode Tutorial : pas de menace ajoutée");
+        }
+        
         AudioManager.Instance?.PlaySFX("Ouch");
         StartCoroutine(InvulnerabilityEffect());
     }
@@ -81,22 +107,35 @@ public class PlayerCollision : MonoBehaviour
         // Déduit le type par le nom
         string type = obj.name.Replace("(Clone)", "").Trim();
 
+        if (_showDebugLogs) Debug.Log($"[PlayerCollision] ⭐ Collectible ramassé : {type}");
+
         switch (type)
         {
             case "PainEpice":
-                ScoreManager.Instance?.AddBonusScore();
+                // Ne pas ajouter de score pendant le tutoriel
+                if (GameManager.Instance == null || GameManager.Instance.CurrentState == GameState.Playing)
+                {
+                    ScoreManager.Instance?.AddBonusScore();
+                }
                 AudioManager.Instance?.PlaySFX("Miam");
                 break;
+                
             case "SucreOrge":
                 _playerController?.ActivateSpeedBoost(10f);
                 AudioManager.Instance?.PlaySFX("Crunch");
                 break;
+                
             case "Cadeau":
-                ActivateShield(); // Utilise maintenant la méthode publique
+                ActivateShield();
                 AudioManager.Instance?.PlaySFX("OhOh");
                 break;
+                
             case "BouleNoel":
-                ThreatManager.Instance?.ReduceThreat(10f);
+                // Ne pas réduire la menace pendant le tutoriel
+                if (GameManager.Instance == null || GameManager.Instance.CurrentState == GameState.Playing)
+                {
+                    ThreatManager.Instance?.ReduceThreat(10f);
+                }
                 AudioManager.Instance?.PlaySFX("WowYeah");
                 break;
         }
@@ -106,7 +145,12 @@ public class PlayerCollision : MonoBehaviour
     private IEnumerator InvulnerabilityEffect()
     {
         _isInvulnerable = true;
-        ThreatManager.Instance?.SetInvulnerabilityActive(true);
+        
+        // Ne pas notifier le ThreatManager pendant le tutoriel
+        if (GameManager.Instance == null || GameManager.Instance.CurrentState == GameState.Playing)
+        {
+            ThreatManager.Instance?.SetInvulnerabilityActive(true);
+        }
 
         float timer = 0;
         while (timer < _invulnerabilityDuration)
@@ -126,6 +170,11 @@ public class PlayerCollision : MonoBehaviour
         }
         
         _isInvulnerable = false;
-        ThreatManager.Instance?.SetInvulnerabilityActive(false);
+        
+        // Ne pas notifier le ThreatManager pendant le tutoriel
+        if (GameManager.Instance == null || GameManager.Instance.CurrentState == GameState.Playing)
+        {
+            ThreatManager.Instance?.SetInvulnerabilityActive(false);
+        }
     }
 }

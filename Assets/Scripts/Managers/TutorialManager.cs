@@ -30,6 +30,10 @@ public class TutorialManager : MonoBehaviour
     private int _currentStep = 0;
     private bool _tutorialCompleted = false;
 
+    // Pour détecter le changement de lane
+    private int _initialLane = -1;
+    private bool _hasChangedLane = false;
+
     // Instructions
     private readonly string[] _instructions = new string[]
     {
@@ -64,6 +68,13 @@ public class TutorialManager : MonoBehaviour
             GameManager.Instance.SetGameState(GameState.Tutorial);
         }
 
+        // 5. Enregistrer la lane initiale
+        if (_player != null)
+        {
+            _initialLane = _player.GetCurrentLane();
+            if (_showDebugLogs) Debug.Log($"[TutorialManager] Lane initiale : {_initialLane}");
+        }
+
         if (_showDebugLogs) Debug.Log("[TutorialManager] 🎓 Session de tutoriel démarrée.");
 
         ShowStep(0);
@@ -95,16 +106,23 @@ public class TutorialManager : MonoBehaviour
     {
         switch (_currentStep)
         {
-            case 0: // Changer de couloir
-                if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow) ||
-                    Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.D))
+            case 0: // Changer de couloir - VÉRIFICATION CORRIGÉE
+                int currentLane = _player.GetCurrentLane();
+                
+                if (!_hasChangedLane && currentLane != _initialLane)
                 {
+                    _hasChangedLane = true;
+                    if (_showDebugLogs) 
+                        Debug.Log($"[TutorialManager] Changement de lane détecté ! {_initialLane} → {currentLane}");
+                    
                     NextStep();
                 }
                 break;
 
-            case 1: // Sauter
-                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow))
+            case 1: // Éviter obstacle (on peut garder la détection simple ou attendre une vraie collision évitée)
+                // Pour l'instant, on garde votre logique existante
+                if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow) ||
+                    Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.D))
                 {
                     StartCoroutine(DelayedNextStep(1.2f));
                 }

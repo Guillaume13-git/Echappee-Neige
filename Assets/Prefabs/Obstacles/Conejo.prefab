@@ -52,8 +52,34 @@ PrefabInstance:
       propertyPath: m_Name
       value: Conejo
       objectReference: {fileID: 0}
+    - target: {fileID: 2959258249463812442, guid: bfa4dd1daf83a974caeb49cd379f0dcc, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2959258249463812442, guid: bfa4dd1daf83a974caeb49cd379f0dcc, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2959258249463812442, guid: bfa4dd1daf83a974caeb49cd379f0dcc, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2959258249463812442, guid: bfa4dd1daf83a974caeb49cd379f0dcc, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2959258249463812442, guid: bfa4dd1daf83a974caeb49cd379f0dcc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2959258249463812442, guid: bfa4dd1daf83a974caeb49cd379f0dcc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 180
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 65702495048144492, guid: bfa4dd1daf83a974caeb49cd379f0dcc, type: 3}
+    - {fileID: -8700617353114198275, guid: bfa4dd1daf83a974caeb49cd379f0dcc, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bfa4dd1daf83a974caeb49cd379f0dcc, type: 3}

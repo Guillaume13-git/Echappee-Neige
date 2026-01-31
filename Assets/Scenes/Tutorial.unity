@@ -389,6 +389,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1272531753}
     m_Modifications:
+    - target: {fileID: 2198462704367531305, guid: 66c8ca0b2b6cdee4794eac7b9d8571a6, type: 3}
+      propertyPath: _currentState
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2444653353267618923, guid: 66c8ca0b2b6cdee4794eac7b9d8571a6, type: 3}
       propertyPath: m_Name
       value: GameManager
@@ -800,10 +804,6 @@ PrefabInstance:
       propertyPath: _gravity
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3437413653191362525, guid: d2d6dc9a9454db44888df75892796019, type: 3}
-      propertyPath: _cameraNormalY
-      value: 0.8
-      objectReference: {fileID: 0}
     - target: {fileID: 7425253627038278342, guid: d2d6dc9a9454db44888df75892796019, type: 3}
       propertyPath: m_LocalRotation.w
       value: 0.706868
@@ -838,7 +838,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8763248617058551556, guid: d2d6dc9a9454db44888df75892796019, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 1.071
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9049602025805703539, guid: d2d6dc9a9454db44888df75892796019, type: 3}
       propertyPath: m_LocalPosition.x
@@ -878,14 +878,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9049602025805703539, guid: d2d6dc9a9454db44888df75892796019, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9096891104548108671, guid: d2d6dc9a9454db44888df75892796019, type: 3}
-      propertyPath: m_Height
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 9096891104548108671, guid: d2d6dc9a9454db44888df75892796019, type: 3}
-      propertyPath: m_Center.y
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

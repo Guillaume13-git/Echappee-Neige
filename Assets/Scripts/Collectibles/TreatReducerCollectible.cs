@@ -10,10 +10,17 @@ public class ThreatReducerCollectible : CollectibleBase
     
     protected override void ApplyEffect()
     {
-        ThreatManager.Instance.ReduceThreatImmediate(_reductionAmount);
+        // On vérifie si l'instance existe pour éviter les erreurs
+        if (ThreatManager.Instance != null)
+        {
+            // CORRECTION : On utilise ReduceThreat au lieu de ReduceThreatImmediate
+            ThreatManager.Instance.ReduceThreat(_reductionAmount);
+            
+            Debug.Log($"[ThreatReducerCollectible] Menace réduite de {_reductionAmount}% !");
+        }
         
+        // Le son est généralement déjà géré par ton PlayerCollision, 
+        // mais si tu veux le doubler ici :
         AudioManager.Instance?.PlaySFX("WowYeah");
-        
-        Debug.Log($"[ThreatReducerCollectible] Menace réduite de {_reductionAmount}% !");
     }
 }

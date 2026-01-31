@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 782068403515074174}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.693, z: 0}
+  m_LocalPosition: {x: 0, y: -0.724, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -240,7 +240,7 @@ MonoBehaviour:
   _laneChangeSpeed: 15
   _leanAmount: 10
   _baseSpeed: 12
-  _gravity: -30
+  _gravity: 0
   _slowdownMultiplier: 0.6
   _normalHeight: 2
   _crouchHeight: 1
@@ -572,6 +572,34 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2726150017871525833, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.706868
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726150017871525833, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.706868
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726150017871525833, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.018374076
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726150017871525833, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.018374076
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726150017871525833, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726150017871525833, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 8.695999
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726150017871525833, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -5.7180176
+      objectReference: {fileID: 0}
     - target: {fileID: 3461146839936469169, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
       propertyPath: m_Name
       value: SkiVisuals
@@ -582,11 +610,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4270439502802145803, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.065
+      value: -0.862
       objectReference: {fileID: 0}
     - target: {fileID: 4270439502802145803, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.741
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4270439502802145803, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -623,6 +651,34 @@ PrefabInstance:
     - target: {fileID: 4809848315733044027, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
       propertyPath: m_LocalPosition.z
       value: -0.002
+      objectReference: {fileID: 0}
+    - target: {fileID: 4809848315733044027, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.70700145
+      objectReference: {fileID: 0}
+    - target: {fileID: 4809848315733044027, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.70700145
+      objectReference: {fileID: 0}
+    - target: {fileID: 4809848315733044027, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.01220491
+      objectReference: {fileID: 0}
+    - target: {fileID: 4809848315733044027, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.01220491
+      objectReference: {fileID: 0}
+    - target: {fileID: 4809848315733044027, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 4809848315733044027, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -7.695984
+      objectReference: {fileID: 0}
+    - target: {fileID: 4809848315733044027, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 5.7180023
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -666,8 +722,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkiAnimator
   _skiLeft: {fileID: 7425253627038278342}
   _skiRight: {fileID: 8714338984754740}
-  _tiltAmount: 2
-  _tiltSpeed: 3
+  _tiltAmount: 0
+  _tiltSpeed: 0
 --- !u!4 &8763248617058551556 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4270439502802145803, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}

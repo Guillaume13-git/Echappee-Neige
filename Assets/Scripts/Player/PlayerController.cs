@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 /// <summary>
-/// Contrôleur du joueur mis à jour.
+/// Contrôleur du joueur mis à jour avec lien UI Bonus.
 /// Gère les couloirs (AZERTY compatible), la gravité, l'accroupissement et l'inclinaison.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
@@ -11,7 +11,7 @@ public class PlayerController : MonoBehaviour
     [Header("Lane System")]
     [SerializeField] private float _laneDistance = 1.84f; 
     [SerializeField] private float _laneChangeSpeed = 15f;
-    [SerializeField] private float _leanAmount = 10f; // Force de l'inclinaison dans les virages
+    [SerializeField] private float _leanAmount = 10f; 
     private int _currentLaneIndex = 1; 
     private float _targetXPosition = 0f;
     
@@ -89,8 +89,6 @@ public class PlayerController : MonoBehaviour
 
     private void HandleInput()
     {
-        // LOGIQUE AZERTY : La touche physique Q (AZERTY) est KeyCode.A pour Unity.
-        // On vérifie les deux pour être tranquille.
         if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.Q)) 
         {
             MoveLane(-1);
@@ -126,26 +124,20 @@ public class PlayerController : MonoBehaviour
     {
         _isGrounded = _controller.isGrounded;
 
-        // 1. MOUVEMENT LATÉRAL
         float currentX = transform.position.x;
         float nextX = Mathf.MoveTowards(currentX, _targetXPosition, _laneChangeSpeed * Time.deltaTime);
         float deltaX = nextX - currentX;
 
-        // 2. PHYSIQUE
         if (_isGrounded && _verticalVelocity < 0) _verticalVelocity = -2f;
         _verticalVelocity += _gravity * Time.deltaTime;
 
-        // 3. APPLICATION
         Vector3 move = new Vector3(deltaX, _verticalVelocity * Time.deltaTime, 0f);
         _controller.Move(move);
 
-        // 4. INCLINAISON VISUELLE (TILT)
-        // On calcule une rotation sur l'axe Z basée sur la vitesse de déplacement X
         float tilt = (deltaX / Time.deltaTime) * (_leanAmount / _laneChangeSpeed);
         Quaternion targetRotation = Quaternion.Euler(0, 0, -tilt);
         transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
 
-        // Verrouillage Z
         if (transform.position.z != 0)
         {
             Vector3 pos = transform.position;
@@ -161,14 +153,22 @@ public class PlayerController : MonoBehaviour
         return _currentBaseSpeed * finalMultiplier;
     }
 
+    // ⭐ INDISPENSABLE POUR LE TUTORIAL : Retourne l'index du couloir (0, 1, 2)
     public int GetCurrentLane() => _currentLaneIndex;
 
-    #region Speed Boost logic
+    #region PowerUps Logic (Lien avec UI)
 
     public void ActivateSpeedBoost(float duration)
     {
         StopCoroutine(nameof(SpeedBoostCoroutine));
         StartCoroutine(SpeedBoostCoroutine(duration));
+        
+        BonusUIManager.Instance?.TriggerSpeedBoost(duration);
+    }
+
+    public void ActivateShield(float duration)
+    {
+        BonusUIManager.Instance?.TriggerShield(duration);
     }
 
     public void StopSpeedBoost()

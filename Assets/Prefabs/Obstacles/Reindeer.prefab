@@ -8,17 +8,41 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -8720157328463406917, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8720157328463406917, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8720157328463406917, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8720157328463406917, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8720157328463406917, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8720157328463406917, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 270
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -5.390692
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -7.586516
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -3.5550513
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
       propertyPath: m_LocalRotation.w
@@ -52,8 +76,43 @@ PrefabInstance:
       propertyPath: m_Name
       value: Reindeer
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
+      propertyPath: m_TagString
+      value: Obstacle
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: -8700617353114198275, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
+    - {fileID: 65702495048144492, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1100806449059888694}
   m_SourcePrefab: {fileID: 100100000, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
+--- !u!1 &8509654566045217365 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: dbb0a18a367b59c40b27d7798e233ca4, type: 3}
+  m_PrefabInstance: {fileID: 8852164181142195972}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &1100806449059888694
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8509654566045217365}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.05, y: 0.05, z: 0.05}
+  m_Center: {x: 0, y: 0.03, z: 0}

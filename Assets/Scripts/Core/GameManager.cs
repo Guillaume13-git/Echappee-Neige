@@ -1,9 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Singleton central qui gère l'état du jeu, les transitions et l'initialisation des managers.
-/// </summary>
 public class GameManager : Singleton<GameManager>
 {
     [Header("Game State")]
@@ -13,8 +10,6 @@ public class GameManager : Singleton<GameManager>
     public GameState CurrentState => _currentState;
     public bool IsPaused => _isPaused;
 
-    // ⭐ PROPRIÉTÉ AJOUTÉE : Permet aux autres scripts de vérifier si on peut jouer
-    // Retourne vrai si on est en jeu (Playing) ou en tutoriel
     public bool IsGameActive => _currentState == GameState.Playing || _currentState == GameState.Tutorial;
 
     public System.Action<GameState> OnGameStateChanged;
@@ -23,70 +18,97 @@ public class GameManager : Singleton<GameManager>
 
     protected override void Awake()
     {
-        if (transform.parent != null)
-        {
-            transform.SetParent(null);
-        }
-
+        if (transform.parent != null) transform.SetParent(null);
         base.Awake();
-
-        if (transform.parent == null)
-        {
-            DontDestroyOnLoad(gameObject);
-        }
+        if (transform.parent == null) DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
     {
         SettingsManager.Instance?.LoadSettings();
+        DetectInitialState();
+    }
+
+    private void DetectInitialState()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        _currentState = sceneName switch
+        {
+            "MainMenu" => GameState.MainMenu,
+            "Tutorial" => GameState.Tutorial,
+            "Gameplay" => GameState.Playing,
+            "GameOver" => GameState.GameOver,
+            _          => GameState.MainMenu
+        };
+        Debug.Log($"[GameManager] État initial : {_currentState}");
     }
 
     public void SetGameState(GameState newState)
     {
         if (_currentState == newState) return;
 
-        Debug.Log($"[GameManager] État changé : {_currentState} → {newState}");
         _currentState = newState;
         OnGameStateChanged?.Invoke(newState);
 
         switch (newState)
         {
             case GameState.Playing:
+            case GameState.Tutorial:
                 Time.timeScale = 1f;
                 _isPaused = false;
                 break;
-
             case GameState.Paused:
-                Time.timeScale = 0f;
-                _isPaused = true;
-                break;
-
             case GameState.GameOver:
                 Time.timeScale = 0f;
-                SaveFinalScore();
+                if (newState == GameState.GameOver) SaveFinalScore();
                 break;
         }
     }
 
+    /// <summary>
+    /// Appelé par le bouton "Jouer" du menu principal.
+    /// </summary>
     public void StartNewGame()
     {
+        ResetAllManagers();
+
+        // Si le tuto doit être affiché, on le lance
         if (SettingsManager.Instance != null && SettingsManager.Instance.ShowTutorial)
         {
             StartTutorial();
-            return;
         }
-        
-        ResetAllManagers();
-        SetGameState(GameState.Playing);
-        SceneManager.LoadScene("Gameplay");
+        else
+        {
+            StartGameplay();
+        }
     }
 
     public void StartTutorial()
     {
-        ResetAllManagers();
         SetGameState(GameState.Tutorial);
         SceneManager.LoadScene("Tutorial");
     }
+
+    /// <summary>
+    /// ✅ NOUVELLE MÉTHODE : Appelé à la fin du tutoriel pour passer au jeu.
+    /// </summary>
+    public void CompleteTutorial()
+    {
+        Debug.Log("[GameManager] Tutoriel complété ! Passage au Gameplay.");
+        
+        // Optionnel : Désactiver le tuto pour les prochaines parties
+        // SettingsManager.Instance?.SetTutorialCompleted(); 
+
+        StartGameplay();
+    }
+
+    private void StartGameplay()
+    {
+        SetGameState(GameState.Playing);
+        SceneManager.LoadScene("Gameplay");
+    }
+
+    // --- Reste des méthodes (Pause, Resume, Score, etc.) ---
     
     private void ResetAllManagers()
     {
@@ -97,16 +119,13 @@ public class GameManager : Singleton<GameManager>
 
     public void PauseGame()
     {
-        if (_currentState != GameState.Playing) return;
-        SetGameState(GameState.Paused);
-        OnGamePaused?.Invoke();
+        if (IsGameActive) SetGameState(GameState.Paused);
     }
 
     public void ResumeGame()
     {
-        if (_currentState != GameState.Paused) return;
-        SetGameState(GameState.Playing);
-        OnGameResumed?.Invoke();
+        if (_currentState == GameState.Paused) 
+            SetGameState(SceneManager.GetActiveScene().name == "Tutorial" ? GameState.Tutorial : GameState.Playing);
     }
 
     public void ReturnToMainMenu()
@@ -116,25 +135,18 @@ public class GameManager : Singleton<GameManager>
         SceneManager.LoadScene("MainMenu");
     }
 
-    public void TriggerGameOver()
-    {
-        SetGameState(GameState.GameOver);
-        SceneManager.LoadScene("GameOver");
-    }
+    public void TriggerGameOver() => SetGameState(GameState.GameOver);
 
     private void SaveFinalScore()
     {
         if (ScoreManager.Instance != null && HighScoreManager.Instance != null)
         {
-            int finalScore = ScoreManager.Instance.CurrentScore;
-            HighScoreManager.Instance.AddScore(finalScore);
+            HighScoreManager.Instance.AddScore(ScoreManager.Instance.CurrentScore);
         }
     }
 
     public void QuitGame()
     {
-        Debug.Log("[GameManager] Fermeture du jeu");
-
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else

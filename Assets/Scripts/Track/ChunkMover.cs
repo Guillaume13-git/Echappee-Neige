@@ -12,7 +12,7 @@ public class ChunkMover : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private bool _showDebugLogs = false;
-    
+
     private bool _isMoving = true;
     private float _forcedSpeed = -1f; // Utilisé si on veut forcer une vitesse (ex: Tutorial)
 
@@ -29,18 +29,27 @@ public class ChunkMover : MonoBehaviour
 
         if (_chunksParent == null)
             Debug.LogError("[ChunkMover] ❌ ChunksParent introuvable !");
+        if (_player == null)
+            Debug.LogWarning("[ChunkMover] ⚠️ PlayerController introuvable au Start.");
     }
 
     private void Update()
     {
         if (!_isMoving || _chunksParent == null) return;
 
-        // On ne vérifie le GameManager que si on n'est pas en vitesse forcée (Tuto)
-        if (_forcedSpeed < 0 && GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing)
-            return;
+        // ✅ CORRECTION : On autorise le mouvement en Playing ET en Tutorial.
+        // Avant, on ne vérifiait que Playing, ce qui bloquait le mouvement en Gameplay
+        // si l'état n'était pas encore mis à jour au moment du chargement de la scène.
+        if (_forcedSpeed < 0 && GameManager.Instance != null)
+        {
+            GameState state = GameManager.Instance.CurrentState;
+            if (state != GameState.Playing && state != GameState.Tutorial)
+                return;
+        }
 
         // Logique de vitesse : Priorité à la vitesse forcée, sinon vitesse du joueur
         float currentSpeed = 0f;
+
         if (_forcedSpeed >= 0)
         {
             currentSpeed = _forcedSpeed;
@@ -56,11 +65,10 @@ public class ChunkMover : MonoBehaviour
         _chunksParent.Translate(0, 0, movementZ, Space.World);
     }
 
-    #region Public API (Fixes Errors)
+    #region Public API
 
     /// <summary>
-    /// Ajouté pour corriger l'erreur dans TutorialManager.
-    /// Permet de forcer la vitesse du décor.
+    /// Permet de forcer une vitesse de déplacement (utilisé par le Tutorial).
     /// </summary>
     public void SetSpeed(float speed)
     {
@@ -83,5 +91,6 @@ public class ChunkMover : MonoBehaviour
     {
         if (_chunksParent != null) _chunksParent.position = Vector3.zero;
     }
+
     #endregion
 }

@@ -605,7 +605,7 @@ MonoBehaviour:
   _recommendedPhase: 0
   _chunkType: 0
   _difficulty: 0
-  _obstacleCount: 5
+  _obstacleCount: 6
   _collectibleCount: 0
 --- !u!1001 &636160615571493548
 PrefabInstance:

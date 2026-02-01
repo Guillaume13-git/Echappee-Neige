@@ -17,7 +17,7 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Button _optionsButton;
     [SerializeField] private Button _quitButton;
 
-    private bool _isNavigating = false; 
+    private bool _isNavigating = false;
 
     private void Start()
     {
@@ -41,15 +41,45 @@ public class MenuController : MonoBehaviour
         _scoresButton?.onClick.RemoveAllListeners();
         _quitButton?.onClick.RemoveAllListeners();
 
-        // On utilise maintenant la navigation avec délai
-        _playButton?.onClick.AddListener(() => OnClickNavigation("Gameplay", "LetsGo"));
+        // ✅ CORRECTION : Le bouton Play passe maintenant par GameManager
+        // Avant, il chargeait la scène directement sans changer l'état du jeu.
+        // Maintenant, GameManager.StartNewGame() gère l'état ET la scène.
+        _playButton?.onClick.AddListener(OnPlayClicked);
+
+        // Ces deux sont des navigations simples vers des menus, pas de changement d'état nécessaire
         _optionsButton?.onClick.AddListener(() => OnClickNavigation("Options", "Blip"));
         _scoresButton?.onClick.AddListener(() => OnClickNavigation("Scores", "Blip"));
         _quitButton?.onClick.AddListener(QuitGame);
     }
 
     /// <summary>
-    /// Lance la coroutine de changement de scène.
+    /// Bouton Play : joue le son puis délègue à GameManager.
+    /// GameManager décide si on va en Tutorial ou en Gameplay.
+    /// </summary>
+    private void OnPlayClicked()
+    {
+        if (_isNavigating) return;
+        StartCoroutine(DelayedStartGame());
+    }
+
+    /// <summary>
+    /// Attend que le son "LetsGo" se termine avant de lancer le jeu via GameManager.
+    /// </summary>
+    private IEnumerator DelayedStartGame()
+    {
+        _isNavigating = true;
+
+        AudioManager.Instance?.PlaySFX("LetsGo");
+
+        yield return new WaitForSecondsRealtime(0.7f);
+
+        // ✅ On passe par GameManager qui gère l'état ET choisit la bonne scène
+        GameManager.Instance?.StartNewGame();
+    }
+
+    /// <summary>
+    /// Navigation générique pour les menus (Options, Scores).
+    /// Ne change pas l'état du jeu, juste un changement de scène menu.
     /// </summary>
     private void OnClickNavigation(string sceneName, string sfx)
     {
@@ -58,20 +88,14 @@ public class MenuController : MonoBehaviour
     }
 
     /// <summary>
-    /// Coroutine qui joue le son, attend 0.2s, puis change de scène.
-    /// Cela évite que le processeur ne coupe le son instantanément.
+    /// Coroutine qui joue le son, attend puis change de scène.
     /// </summary>
     private IEnumerator NavWithDelay(string sceneName, string sfx)
     {
         _isNavigating = true;
 
-        if (AudioManager.Instance != null)
-        {
-            // On joue le son (Blip ou LetsGo)
-            AudioManager.Instance.PlaySFX(sfx);
-        }
+        AudioManager.Instance?.PlaySFX(sfx);
 
-        // WaitForSecondsRealtime permet d'ignorer une éventuelle pause du TimeScale
         yield return new WaitForSecondsRealtime(0.7f);
 
         Debug.Log($"[MenuController] Chargement de la scène : {sceneName}");
@@ -96,7 +120,7 @@ public class MenuController : MonoBehaviour
     private void QuitGame()
     {
         if (_isNavigating) return;
-        
+
         Debug.Log("[MenuController] Quitter le jeu");
         AudioManager.Instance?.PlaySFX("Blip");
 

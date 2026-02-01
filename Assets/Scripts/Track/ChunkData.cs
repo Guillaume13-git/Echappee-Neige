@@ -4,7 +4,7 @@ using System.Linq;
 /// <summary>
 /// Composant attaché à chaque préfab de chunk.
 /// Contient les métadonnées pour la sélection et le placement.
-/// EMPLACEMENT : Assets/Scripts/Track/ChunkData.cs
+/// VERSION CORRIGÉE - Utilise CollectibleVisual au lieu de CollectibleBase
 /// </summary>
 public class ChunkData : MonoBehaviour
 {
@@ -31,6 +31,7 @@ public class ChunkData : MonoBehaviour
     /// <summary>
     /// Appelé automatiquement quand tu modifies le prefab dans l'éditeur.
     /// Compte les obstacles et collectibles.
+    /// VERSION CORRIGÉE - Cherche CollectibleVisual au lieu de CollectibleBase
     /// </summary>
     private void OnValidate()
     {
@@ -41,8 +42,12 @@ public class ChunkData : MonoBehaviour
         _obstacleCount = GetComponentsInChildren<Collider>()
             .Count(c => c.CompareTag("Obstacle"));
             
-        // Compte les collectibles
-        var collectibles = GetComponentsInChildren<CollectibleBase>();
+        // ✅ CORRECTION : Cherche CollectibleVisual au lieu de CollectibleBase
+        var collectibles = GetComponentsInChildren<CollectibleVisual>();
         _collectibleCount = collectibles != null ? collectibles.Length : 0;
+        
+        // Alternative : compter par tag "Collectible" (plus robuste)
+        // _collectibleCount = GetComponentsInChildren<Transform>()
+        //     .Count(t => t.CompareTag("Collectible") && t != transform);
     }
 }

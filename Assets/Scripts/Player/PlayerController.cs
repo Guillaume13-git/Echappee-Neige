@@ -2,33 +2,33 @@ using UnityEngine;
 using System.Collections;
 
 /// <summary>
-/// Contrôleur du joueur mis à jour avec lien UI Bonus.
+/// Contrôleur du joueur.
 /// Gère les couloirs (AZERTY compatible), la gravité, l'accroupissement et l'inclinaison.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Lane System")]
-    [SerializeField] private float _laneDistance = 1.84f; 
+    [SerializeField] private float _laneDistance = 1.84f;
     [SerializeField] private float _laneChangeSpeed = 15f;
-    [SerializeField] private float _leanAmount = 10f; 
-    private int _currentLaneIndex = 1; 
+    [SerializeField] private float _leanAmount = 10f;
+    private int _currentLaneIndex = 1;
     private float _targetXPosition = 0f;
-    
+
     private float _leftLaneX => -_laneDistance;
     private float _centerLaneX => 0f;
     private float _rightLaneX => _laneDistance;
 
     [Header("Forward Movement (World Logic)")]
     [SerializeField] private float _baseSpeed = 12f;
-    private float _currentBaseSpeed; 
+    private float _currentBaseSpeed;
     private float _speedMultiplier = 1f;
 
     [Header("Physics")]
     [SerializeField] private float _gravity = -30f;
     private float _verticalVelocity;
     private bool _isGrounded;
-    
+
     [Header("Slowdown (Chasse-Neige)")]
     [SerializeField] private float _slowdownMultiplier = 0.6f;
     private bool _isSlowingDown = false;
@@ -42,14 +42,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float _cameraCrouchY = 0.3f;
     private bool _isCrouching = false;
 
-    [Header("Debug")]
-    [SerializeField] private bool _showDebugLogs = true;
-
     private CharacterController _controller;
-
     public bool IsAccelerated { get; private set; } = false;
 
-    private void Awake() 
+    private void Awake()
     {
         _controller = GetComponent<CharacterController>();
         if (_cameraTransform == null) _cameraTransform = Camera.main?.transform;
@@ -60,8 +56,8 @@ public class PlayerController : MonoBehaviour
         _currentBaseSpeed = _baseSpeed;
         _currentLaneIndex = 1;
         _targetXPosition = _centerLaneX;
-        
-        _controller.enabled = false; 
+
+        _controller.enabled = false;
         transform.position = new Vector3(_centerLaneX, transform.position.y, 0f);
         _controller.enabled = true;
 
@@ -77,8 +73,8 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance != null && 
-            GameManager.Instance.CurrentState != GameState.Playing && 
+        if (GameManager.Instance != null &&
+            GameManager.Instance.CurrentState != GameState.Playing &&
             GameManager.Instance.CurrentState != GameState.Tutorial)
             return;
 
@@ -89,14 +85,10 @@ public class PlayerController : MonoBehaviour
 
     private void HandleInput()
     {
-        if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.Q)) 
-        {
+        if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.Q))
             MoveLane(-1);
-        }
-        else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) 
-        {
+        else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
             MoveLane(1);
-        }
 
         _isCrouching = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S);
         _isSlowingDown = Input.GetKey(KeyCode.Space);
@@ -106,7 +98,6 @@ public class PlayerController : MonoBehaviour
     {
         int previousLane = _currentLaneIndex;
         _currentLaneIndex = Mathf.Clamp(_currentLaneIndex + direction, 0, 2);
-
         if (previousLane == _currentLaneIndex) return;
 
         _targetXPosition = _currentLaneIndex switch
@@ -120,6 +111,12 @@ public class PlayerController : MonoBehaviour
         AudioManager.Instance?.PlaySFX("Whoosh");
     }
 
+    // ✅ Ajouté pour corriger l'erreur du TutorialManager
+    public int GetCurrentLane()
+    {
+        return _currentLaneIndex;
+    }
+
     private void ApplyMovement()
     {
         _isGrounded = _controller.isGrounded;
@@ -128,11 +125,14 @@ public class PlayerController : MonoBehaviour
         float nextX = Mathf.MoveTowards(currentX, _targetXPosition, _laneChangeSpeed * Time.deltaTime);
         float deltaX = nextX - currentX;
 
-        if (_isGrounded && _verticalVelocity < 0) _verticalVelocity = -2f;
+        if (_isGrounded) _verticalVelocity = -2f; 
         _verticalVelocity += _gravity * Time.deltaTime;
 
         Vector3 move = new Vector3(deltaX, _verticalVelocity * Time.deltaTime, 0f);
         _controller.Move(move);
+
+        if (!_isGrounded && transform.position.y > 0.01f && _verticalVelocity > 0f)
+            _verticalVelocity = -1f; 
 
         float tilt = (deltaX / Time.deltaTime) * (_leanAmount / _laneChangeSpeed);
         Quaternion targetRotation = Quaternion.Euler(0, 0, -tilt);
@@ -153,17 +153,24 @@ public class PlayerController : MonoBehaviour
         return _currentBaseSpeed * finalMultiplier;
     }
 
-    // ⭐ INDISPENSABLE POUR LE TUTORIAL : Retourne l'index du couloir (0, 1, 2)
-    public int GetCurrentLane() => _currentLaneIndex;
-
-    #region PowerUps Logic (Lien avec UI)
+    #region Speed Boost / PowerUps
 
     public void ActivateSpeedBoost(float duration)
     {
         StopCoroutine(nameof(SpeedBoostCoroutine));
         StartCoroutine(SpeedBoostCoroutine(duration));
-        
+        // L'UI est déclenchée ici ou dans PlayerCollision, les deux fonctionnent
         BonusUIManager.Instance?.TriggerSpeedBoost(duration);
+    }
+
+    // ✅ Ajouté pour corriger l'erreur de PlayerCollision lors d'un choc
+    public void StopSpeedBoost()
+    {
+        StopCoroutine(nameof(SpeedBoostCoroutine));
+        _speedMultiplier = 1f;
+        IsAccelerated = false;
+        ThreatManager.Instance?.SetSpeedBoostActive(false);
+        ScoreManager.Instance?.SetSpeedMultiplier(false);
     }
 
     public void ActivateShield(float duration)
@@ -171,24 +178,16 @@ public class PlayerController : MonoBehaviour
         BonusUIManager.Instance?.TriggerShield(duration);
     }
 
-    public void StopSpeedBoost()
-    {
-        StopCoroutine(nameof(SpeedBoostCoroutine));
-        IsAccelerated = false;
-        _speedMultiplier = 1f;
-        ThreatManager.Instance?.SetSpeedBoostActive(false);
-        if (_showDebugLogs) Debug.Log("[PlayerController] Boost arrêté.");
-    }
-
     private IEnumerator SpeedBoostCoroutine(float duration)
     {
         IsAccelerated = true;
         _speedMultiplier = 2.5f;
         ThreatManager.Instance?.SetSpeedBoostActive(true);
+        ScoreManager.Instance?.SetSpeedMultiplier(true);
+
         yield return new WaitForSeconds(duration);
-        _speedMultiplier = 1f;
-        IsAccelerated = false;
-        ThreatManager.Instance?.SetSpeedBoostActive(false);
+
+        StopSpeedBoost();
     }
 
     #endregion
@@ -211,12 +210,13 @@ public class PlayerController : MonoBehaviour
 
     private void UpdateSpeedForPhase(TrackPhase phase)
     {
-        _currentBaseSpeed = phase switch {
+        _currentBaseSpeed = phase switch
+        {
             TrackPhase.Green => 12f,
-            TrackPhase.Blue => 15f,
-            TrackPhase.Red => 20f,
+            TrackPhase.Blue  => 15f,
+            TrackPhase.Red   => 20f,
             TrackPhase.Black => 25f,
-            _ => 12f
+            _                => 12f
         };
     }
 

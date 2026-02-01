@@ -1,118 +1,199 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
-/// Spawne les obstacles sur un tronçon de piste.
-/// Gère la fréquence, le timing et le positionnement selon la phase.
+/// Génère les obstacles sur un chunk de manière aléatoire sur les 3 voies.
+/// VERSION FINALE - Spawn aléatoire simple sans spawn points
 /// </summary>
 public class ObstacleSpawner : MonoBehaviour
 {
-    [Header("Obstacle Prefabs")]
-    [SerializeField] private GameObject[] _lanObstacles; // Sapins, arches, barrières
-    [SerializeField] private GameObject[] _interLaneObstacles; // Obstacles entre couloirs
-    
-    [Header("Spawn Positions")]
-    [SerializeField] private Transform[] _laneSpawnPoints; // 3 positions (couloir 1, 2, 3)
-    [SerializeField] private Transform[] _interLaneSpawnPoints; // 2 positions (entre 1-2, 2-3)
-    
-    [Header("Spawn Settings")]
-    [SerializeField] private float _baseSpawnDistance = 170f;
-    [SerializeField] private float _minSpawnDistance = 30f;
-    [SerializeField] private float _distanceReductionPerPhase = 15f;
-    
-    private float _currentSpawnDistance;
-    private int _completedObjectives = 0; // Synchronisé avec ScoreManager
-    
-    private void Awake()
-    {
-        _currentSpawnDistance = _baseSpawnDistance;
-    }
-    
+    [Header("Configuration Obstacles")]
+    [SerializeField] private List<GameObject> _laneObstacles = new List<GameObject>();
+    [SerializeField] private List<GameObject> _interLaneObstacles = new List<GameObject>();
+
+    [Header("Spawn Configuration")]
+    [SerializeField] private int _minObstaclesPerChunk = 2;
+    [SerializeField] private int _maxObstaclesPerChunk = 4;
+    [SerializeField] private bool _spawnInterLaneObstacles = true;
+    [SerializeField] [Range(0f, 1f)] private float _interLaneSpawnChance = 0.3f;
+
+    [Header("Lane Positions (X)")]
+    [SerializeField] private float _leftLaneX = -1.84f;
+    [SerializeField] private float _centerLaneX = 0f;
+    [SerializeField] private float _rightLaneX = 1.84f;
+
+    [Header("Spawn Range Z")]
+    [SerializeField] private float _minZ = 10f;
+    [SerializeField] private float _maxZ = 40f;
+
+    [Header("Height")]
+    [SerializeField] private float _spawnHeight = 0f;
+
+    [Header("Debug")]
+    [SerializeField] private bool _showDebugLogs = false;
+
     /// <summary>
-    /// Génère les obstacles pour ce chunk selon la phase actuelle.
+    /// Appelé par ChunkSpawner pour générer les obstacles
     /// </summary>
-    public void SpawnObstacles(TrackPhase phase)
+    public void SpawnObstacles(TrackPhase phase = TrackPhase.Green)
     {
-        // Nombre d'obstacles augmente avec la difficulté
-        int obstacleCount = GetObstacleCountForPhase(phase);
-        
-        for (int i = 0; i < obstacleCount; i++)
+        if (_laneObstacles.Count == 0)
         {
-            SpawnRandomLaneObstacle();
+            Debug.LogWarning($"[ObstacleSpawner] {gameObject.name} : Aucun obstacle configuré !");
+            return;
         }
+
+        // Résoudre le parent dynamiquement
+        Transform chunkRoot = transform.parent;
         
-        // Obstacles inter-couloirs (moins fréquents)
-        if (Random.value > 0.5f) // 50% de chance
+        if (chunkRoot == null)
         {
-            SpawnRandomInterLaneObstacle();
+            Debug.LogError($"[ObstacleSpawner] {gameObject.name} n'a pas de parent !");
+            return;
         }
-    }
-    
-    /// <summary>
-    /// Retourne le nombre d'obstacles selon la phase.
-    /// </summary>
-    private int GetObstacleCountForPhase(TrackPhase phase)
-    {
-        switch (phase)
+
+        // Calculer le nombre d'obstacles selon la phase
+        int obstacleCount = CalculateObstacleCount(phase);
+
+        if (_showDebugLogs)
         {
-            case TrackPhase.Green: return Random.Range(1, 3);
-            case TrackPhase.Blue: return Random.Range(2, 4);
-            case TrackPhase.Red: return Random.Range(3, 6);
-            case TrackPhase.Black: return Random.Range(5, 8);
-            default: return 1;
+            Debug.Log($"[ObstacleSpawner] Génération de {obstacleCount} obstacles sur {gameObject.name} (Phase: {phase})");
+        }
+
+        // Générer les obstacles
+        SpawnLaneObstacles(chunkRoot, obstacleCount);
+        
+        // Générer obstacles inter-voies (optionnel)
+        if (_spawnInterLaneObstacles && Random.value < _interLaneSpawnChance)
+        {
+            SpawnInterLaneObstacle(chunkRoot);
         }
     }
-    
+
     /// <summary>
-    /// Génère un obstacle aléatoire sur un couloir.
+    /// Calcule le nombre d'obstacles selon la phase
     /// </summary>
-    private void SpawnRandomLaneObstacle()
+    private int CalculateObstacleCount(TrackPhase phase)
     {
-        if (_lanObstacles.Length == 0 || _laneSpawnPoints.Length == 0) return;
-        
-        // Sélection aléatoire
-        GameObject obstaclePrefab = _lanObstacles[Random.Range(0, _lanObstacles.Length)];
-        Transform spawnPoint = _laneSpawnPoints[Random.Range(0, _laneSpawnPoints.Length)];
-        
-        // Position aléatoire en Z sur le chunk (entre 0 et 50m)
-        Vector3 spawnPos = spawnPoint.position;
-        spawnPos.z += Random.Range(5f, 45f);
-        
-        // Instanciation
-        GameObject obstacle = Instantiate(obstaclePrefab, spawnPos, Quaternion.identity, transform);
-        obstacle.tag = "Obstacle";
+        int baseCount = phase switch
+        {
+            TrackPhase.Green => Random.Range(_minObstaclesPerChunk, _minObstaclesPerChunk + 1),
+            TrackPhase.Blue => Random.Range(_minObstaclesPerChunk, _maxObstaclesPerChunk - 1),
+            TrackPhase.Red => Random.Range(_minObstaclesPerChunk + 1, _maxObstaclesPerChunk),
+            TrackPhase.Black => Random.Range(_maxObstaclesPerChunk - 1, _maxObstaclesPerChunk + 1),
+            _ => _minObstaclesPerChunk
+        };
+
+        return Mathf.Clamp(baseCount, 1, 6);
     }
-    
+
     /// <summary>
-    /// Génère un obstacle entre deux couloirs.
+    /// Génère plusieurs obstacles sur différentes voies avec positions LOCALES aléatoires
     /// </summary>
-    private void SpawnRandomInterLaneObstacle()
+    private void SpawnLaneObstacles(Transform chunkRoot, int count)
     {
-        if (_interLaneObstacles.Length == 0 || _interLaneSpawnPoints.Length == 0) return;
+        // Array des positions X possibles
+        float[] lanePositions = { _leftLaneX, _centerLaneX, _rightLaneX };
+        List<int> availableLanes = new List<int> { 0, 1, 2 };
         
-        GameObject obstaclePrefab = _interLaneObstacles[Random.Range(0, _interLaneObstacles.Length)];
-        Transform spawnPoint = _interLaneSpawnPoints[Random.Range(0, _interLaneSpawnPoints.Length)];
-        
-        Vector3 spawnPos = spawnPoint.position;
-        spawnPos.z += Random.Range(10f, 40f);
-        
-        GameObject obstacle = Instantiate(obstaclePrefab, spawnPos, Quaternion.identity, transform);
-        obstacle.tag = "Obstacle";
+        for (int i = 0; i < count; i++)
+        {
+            // Réinitialiser les voies si toutes utilisées
+            if (availableLanes.Count == 0)
+            {
+                availableLanes = new List<int> { 0, 1, 2 };
+            }
+
+            // Choisir une voie aléatoire
+            int randomLaneIndex = Random.Range(0, availableLanes.Count);
+            int selectedLane = availableLanes[randomLaneIndex];
+            availableLanes.RemoveAt(randomLaneIndex);
+
+            // Choisir un obstacle aléatoire
+            int randomObstacle = Random.Range(0, _laneObstacles.Count);
+            GameObject obstaclePrefab = _laneObstacles[randomObstacle];
+
+            if (obstaclePrefab != null)
+            {
+                // Position LOCALE aléatoire
+                float laneX = lanePositions[selectedLane];
+                float randomZ = Random.Range(_minZ, _maxZ);
+                
+                Vector3 localPosition = new Vector3(laneX, _spawnHeight, randomZ);
+
+                // Instancier avec le chunk comme parent
+                GameObject obstacle = Instantiate(obstaclePrefab, chunkRoot);
+                obstacle.transform.localPosition = localPosition;
+                obstacle.transform.localRotation = Quaternion.identity;
+
+                // Forcer le tag
+                obstacle.tag = "Obstacle";
+
+                if (_showDebugLogs)
+                {
+                    Debug.Log($"[ObstacleSpawner] Obstacle {i + 1}/{count} spawné sur voie {selectedLane} " +
+                             $"(X={laneX}) à position locale {localPosition}");
+                }
+            }
+        }
     }
-    
+
     /// <summary>
-    /// Met à jour la distance de spawn après validation d'un objectif.
-    /// (Appelé par un événement du ScoreManager ou PhaseManager)
+    /// Génère un obstacle entre deux voies
     /// </summary>
-    public void OnObjectiveCompleted()
+    private void SpawnInterLaneObstacle(Transform chunkRoot)
     {
-        _completedObjectives++;
+        if (_interLaneObstacles.Count == 0) return;
+
+        // Positions inter-voies : entre gauche-centre (-0.92) ou centre-droite (0.92)
+        float[] interLanePositions = { -0.92f, 0.92f };
         
-        // Réduction de la distance (augmentation de la difficulté)
-        _currentSpawnDistance = Mathf.Max(
-            _minSpawnDistance, 
-            _baseSpawnDistance - (_completedObjectives * _distanceReductionPerPhase)
-        );
-        
-        Debug.Log($"[ObstacleSpawner] Distance de spawn réduite à {_currentSpawnDistance}m");
+        int randomObstacle = Random.Range(0, _interLaneObstacles.Count);
+        GameObject obstaclePrefab = _interLaneObstacles[randomObstacle];
+
+        if (obstaclePrefab != null)
+        {
+            float randomX = interLanePositions[Random.Range(0, 2)];
+            float randomZ = Random.Range(_minZ, _maxZ);
+            
+            Vector3 localPosition = new Vector3(randomX, _spawnHeight, randomZ);
+
+            GameObject obstacle = Instantiate(obstaclePrefab, chunkRoot);
+            obstacle.transform.localPosition = localPosition;
+            obstacle.transform.localRotation = Quaternion.identity;
+            obstacle.tag = "Obstacle";
+
+            if (_showDebugLogs)
+            {
+                Debug.Log($"[ObstacleSpawner] Obstacle inter-voies spawné à position locale {localPosition}");
+            }
+        }
     }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        // Visualiser les 3 voies dans l'éditeur
+        Gizmos.color = Color.red;
+        
+        Vector3 worldPos = transform.position;
+        
+        // Voie gauche
+        Gizmos.DrawLine(worldPos + new Vector3(_leftLaneX, 0, 0), 
+                       worldPos + new Vector3(_leftLaneX, 0, 50));
+        
+        // Voie centre
+        Gizmos.DrawLine(worldPos + new Vector3(_centerLaneX, 0, 0), 
+                       worldPos + new Vector3(_centerLaneX, 0, 50));
+        
+        // Voie droite
+        Gizmos.DrawLine(worldPos + new Vector3(_rightLaneX, 0, 0), 
+                       worldPos + new Vector3(_rightLaneX, 0, 50));
+        
+        // Zone de spawn Z
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(worldPos + new Vector3(0, 0, (_minZ + _maxZ) / 2), 
+                           new Vector3(4, 2, _maxZ - _minZ));
+    }
+#endif
 }

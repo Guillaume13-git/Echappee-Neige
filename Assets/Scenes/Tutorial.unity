@@ -1131,13 +1131,11 @@ MonoBehaviour:
   _blueChunks: []
   _redChunks: []
   _blackChunks: []
-  _spawnParent: {fileID: 663437760}
+  _chunksParent: {fileID: 663437760}
   _visibleChunksCount: 2
   _defaultChunkLength: 25
   _recycleThresholdZ: -3
-  _playerTransform: {fileID: 0}
   _isTutorialMode: 1
-  _showDebugLogs: 1
 --- !u!1 &1272531752
 GameObject:
   m_ObjectHideFlags: 0

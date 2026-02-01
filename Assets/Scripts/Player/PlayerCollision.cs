@@ -2,179 +2,290 @@ using UnityEngine;
 using System.Collections;
 
 /// <summary>
-/// Gère les collisions et les bonus du joueur.
+/// Gère les collisions du joueur avec les obstacles et collectibles.
+/// VERSION CORRIGÉE - Ajout de l'invulnérabilité au spawn (BUG 1)
+/// VERSION FINALE - Compatible avec vos managers existants
 /// </summary>
 public class PlayerCollision : MonoBehaviour
 {
-    [Header("Invulnerability")]
-    [SerializeField] private float _invulnerabilityDuration = 3f;
-    private bool _isInvulnerable = false;
-    
-    [Header("Shield")]
-    private bool _hasShield = false;
-    
-    [Header("Visual Feedback")]
+    [Header("Références")]
+    [SerializeField] private GameManager _gameManager;
+    [SerializeField] private ThreatManager _threatManager;
+    [SerializeField] private ScoreManager _scoreManager;
+    [SerializeField] private PlayerController _playerController;
     [SerializeField] private Renderer[] _playerRenderers;
+
+    [Header("Invulnérabilité")]
+    [SerializeField] private float _invulnerabilityDuration = 3f;
     [SerializeField] private float _blinkInterval = 0.1f;
+    
+    private bool _isInvulnerable = false;
+    private bool _spawnInvulnerabilityActive = false; // NOUVEAU : pour le spawn
+    
+    [Header("Shield System")]
+    private bool _hasShield = false;
+    private Coroutine _shieldCoroutine;
     
     [Header("Debug")]
     [SerializeField] private bool _showDebugLogs = false;
-    
-    private PlayerController _playerController;
 
-    public bool HasShield => _hasShield;
-
-    private void Awake() => _playerController = GetComponent<PlayerController>();
-
-    private void OnTriggerEnter(Collider other)
+    private void Awake()
     {
-        // Sécurité GameManager - Autoriser Tutorial ET Playing
-        if (GameManager.Instance != null && 
-            GameManager.Instance.CurrentState != GameState.Playing && 
-            GameManager.Instance.CurrentState != GameState.Tutorial) 
-        {
-            return;
-        }
+        if (_gameManager == null) _gameManager = FindFirstObjectByType<GameManager>();
+        if (_threatManager == null) _threatManager = FindFirstObjectByType<ThreatManager>();
+        if (_scoreManager == null) _scoreManager = FindFirstObjectByType<ScoreManager>();
+        if (_playerController == null) _playerController = GetComponent<PlayerController>();
+    }
 
-        if (other.CompareTag("Collectible"))
+    private void OnEnable()
+    {
+        // NOUVEAU : S'abonner aux changements d'état du jeu pour détecter le début de partie
+        if (_gameManager != null)
         {
-            HandleCollectible(other.gameObject);
+            _gameManager.OnGameStateChanged += OnGameStateChanged;
         }
-        else if (other.CompareTag("Obstacle"))
+    }
+
+    private void OnDisable()
+    {
+        // NOUVEAU : Se désabonner des événements
+        if (_gameManager != null)
         {
-            HandleObstacleCollision();
+            _gameManager.OnGameStateChanged -= OnGameStateChanged;
         }
     }
 
     /// <summary>
-    /// Active le bouclier (appelé par les collectibles).
+    /// NOUVEAU : Détecte quand le jeu démarre pour activer l'invulnérabilité de spawn
     /// </summary>
-    public void ActivateShield()
+    private void OnGameStateChanged(GameState newState)
     {
-        _hasShield = true;
-        AudioManager.Instance?.PlaySFX("ShieldUp");
-        if (_showDebugLogs) Debug.Log("[PlayerCollision] 🛡️ Bouclier activé !");
+        if (newState == GameState.Playing && !_spawnInvulnerabilityActive)
+        {
+            StartCoroutine(SpawnInvulnerabilityCoroutine());
+        }
     }
 
-    private void HandleObstacleCollision()
+    /// <summary>
+    /// NOUVEAU : Coroutine d'invulnérabilité au spawn pour éviter les dégâts frame 0
+    /// Attend 2 frames pour que le CharacterController se stabilise après re-enable
+    /// </summary>
+    private IEnumerator SpawnInvulnerabilityCoroutine()
     {
-        if (_isInvulnerable) 
+        _spawnInvulnerabilityActive = true;
+        
+        if (_showDebugLogs) Debug.Log("[PlayerCollision] Invulnérabilité de spawn activée.");
+        
+        // Attendre 2 frames pour que Unity recalcule les collisions après le re-enable du CharacterController
+        yield return null;
+        yield return null;
+        
+        _spawnInvulnerabilityActive = false;
+        
+        if (_showDebugLogs) Debug.Log("[PlayerCollision] Invulnérabilité de spawn terminée.");
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        // MODIFIÉ : Ignorer les collisions pendant l'invulnérabilité de spawn
+        if (_spawnInvulnerabilityActive)
         {
-            if (_showDebugLogs) Debug.Log("[PlayerCollision] Collision ignorée (invulnérable)");
+            if (_showDebugLogs) Debug.Log($"[PlayerCollision] Collision ignorée (spawn invulnerable) : {other.gameObject.name}");
             return;
         }
 
-        if (_showDebugLogs) Debug.Log("[PlayerCollision] 💥 Collision avec obstacle détectée !");
+        if (_isInvulnerable) return;
 
-        // 1. Priorité au Bouclier
+        if (other.CompareTag("Obstacle"))
+        {
+            HandleObstacleCollision(other.gameObject);
+        }
+        else if (other.CompareTag("Collectible"))
+        {
+            HandleCollectible(other.gameObject);
+        }
+    }
+
+    private void HandleObstacleCollision(GameObject obstacle)
+    {
+        // Vérifier si le joueur a un bouclier actif
         if (_hasShield)
         {
-            _hasShield = false;
-            AudioManager.Instance?.PlaySFX("ShieldBreak");
-            if (_showDebugLogs) Debug.Log("[PlayerCollision] Bouclier brisé !");
-            StartCoroutine(InvulnerabilityEffect());
+            if (_showDebugLogs) Debug.Log("[PlayerCollision] Bouclier activé - obstacle bloqué !");
+            DeactivateShield();
+            Destroy(obstacle);
+            AudioManager.Instance?.PlaySFX("Shield");
             return;
         }
 
-        // 2. Priorité au Boost de vitesse
+        // Vérifier si le joueur est en mode vitesse accélérée
         if (_playerController != null && _playerController.IsAccelerated)
         {
+            if (_showDebugLogs) Debug.Log("[PlayerCollision] Boost actif - obstacle détruit !");
             _playerController.StopSpeedBoost();
-            AudioManager.Instance?.PlaySFX("SpeedLost");
-            if (_showDebugLogs) Debug.Log("[PlayerCollision] Boost de vitesse perdu !");
-            StartCoroutine(InvulnerabilityEffect());
+            Destroy(obstacle);
+            AudioManager.Instance?.PlaySFX("Crash");
             return;
         }
 
-        // 3. Sinon : Dégâts normaux (Menace)
-        // Ne pas ajouter de menace pendant le tutoriel
-        if (GameManager.Instance == null || GameManager.Instance.CurrentState == GameState.Playing)
+        // Appliquer les dégâts de menace
+        if (_threatManager != null)
         {
-            ThreatManager.Instance?.AddThreatFromCollision();
-            if (_showDebugLogs) Debug.Log("[PlayerCollision] Menace ajoutée !");
+            _threatManager.AddThreatFromCollision();
         }
-        else if (_showDebugLogs)
-        {
-            Debug.Log("[PlayerCollision] Mode Tutorial : pas de menace ajoutée");
-        }
+
+        // Activer l'invulnérabilité temporaire
+        StartCoroutine(InvulnerabilityCoroutine());
+
+        // Détruire l'obstacle
+        Destroy(obstacle);
         
+        // Son de collision
         AudioManager.Instance?.PlaySFX("Ouch");
-        StartCoroutine(InvulnerabilityEffect());
     }
 
     private void HandleCollectible(GameObject obj)
     {
-        // Déduit le type par le nom
         string type = obj.name.Replace("(Clone)", "").Trim();
-
-        if (_showDebugLogs) Debug.Log($"[PlayerCollision] ⭐ Collectible ramassé : {type}");
+        
+        if (_showDebugLogs) Debug.Log($"[PlayerCollision] Collectible détecté : {type}");
 
         switch (type)
         {
             case "PainEpice":
-                // Ne pas ajouter de score pendant le tutoriel
-                if (GameManager.Instance == null || GameManager.Instance.CurrentState == GameState.Playing)
+                // Bonus de score selon la phase
+                if (_scoreManager != null)
                 {
-                    ScoreManager.Instance?.AddBonusScore();
+                    _scoreManager.AddBonusScore();
                 }
                 AudioManager.Instance?.PlaySFX("Miam");
                 break;
-                
+
             case "SucreOrge":
-                _playerController?.ActivateSpeedBoost(10f);
+                // Boost de vitesse
+                if (_playerController != null)
+                {
+                    _playerController.ActivateSpeedBoost(10f);
+                }
                 AudioManager.Instance?.PlaySFX("Crunch");
                 break;
-                
+
             case "Cadeau":
-                ActivateShield();
+                // Bouclier
+                ActivateShield(10f); // 10 secondes de bouclier
                 AudioManager.Instance?.PlaySFX("OhOh");
                 break;
-                
-            case "BouleNoel":
-                // Ne pas réduire la menace pendant le tutoriel
-                if (GameManager.Instance == null || GameManager.Instance.CurrentState == GameState.Playing)
+
+            case "BouleDeNoel":
+                // Réduction de menace
+                if (_threatManager != null)
                 {
-                    ThreatManager.Instance?.ReduceThreat(10f);
+                    _threatManager.ReduceThreat(10f);
                 }
                 AudioManager.Instance?.PlaySFX("WowYeah");
                 break;
+
+            default:
+                Debug.LogWarning($"[PlayerCollision] Objet non reconnu : {type}");
+                break;
         }
+
         Destroy(obj);
     }
 
-    private IEnumerator InvulnerabilityEffect()
+    #region Shield System
+
+    /// <summary>
+    /// Active le bouclier pour une durée donnée
+    /// </summary>
+    public void ActivateShield(float duration = 10f)
+    {
+        if (_shieldCoroutine != null)
+        {
+            StopCoroutine(_shieldCoroutine);
+        }
+        
+        _hasShield = true;
+        _shieldCoroutine = StartCoroutine(ShieldCoroutine(duration));
+        
+        if (_showDebugLogs) Debug.Log($"[PlayerCollision] Bouclier activé pour {duration}s");
+    }
+
+    /// <summary>
+    /// Désactive le bouclier
+    /// </summary>
+    public void DeactivateShield()
+    {
+        if (_shieldCoroutine != null)
+        {
+            StopCoroutine(_shieldCoroutine);
+            _shieldCoroutine = null;
+        }
+        
+        _hasShield = false;
+        
+        if (_showDebugLogs) Debug.Log("[PlayerCollision] Bouclier désactivé");
+    }
+
+    /// <summary>
+    /// Coroutine de gestion du bouclier
+    /// </summary>
+    private IEnumerator ShieldCoroutine(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        DeactivateShield();
+    }
+
+    /// <summary>
+    /// Propriété publique pour vérifier si le bouclier est actif
+    /// </summary>
+    public bool HasShield => _hasShield;
+
+    #endregion
+
+    private IEnumerator InvulnerabilityCoroutine()
     {
         _isInvulnerable = true;
-        
-        // Ne pas notifier le ThreatManager pendant le tutoriel
-        if (GameManager.Instance == null || GameManager.Instance.CurrentState == GameState.Playing)
+        float elapsed = 0f;
+        bool visible = true;
+
+        // Activer l'état d'invulnérabilité dans le ThreatManager
+        if (_threatManager != null)
         {
-            ThreatManager.Instance?.SetInvulnerabilityActive(true);
+            _threatManager.SetInvulnerabilityActive(true);
         }
 
-        float timer = 0;
-        while (timer < _invulnerabilityDuration)
+        while (elapsed < _invulnerabilityDuration)
         {
-            foreach (var r in _playerRenderers) 
+            // Clignotement visuel
+            visible = !visible;
+            foreach (var renderer in _playerRenderers)
             {
-                if(r) r.enabled = !r.enabled;
+                if (renderer != null)
+                {
+                    renderer.enabled = visible;
+                }
             }
+
             yield return new WaitForSeconds(_blinkInterval);
-            timer += _blinkInterval;
+            elapsed += _blinkInterval;
         }
 
-        // Reset visuel
-        foreach (var r in _playerRenderers) 
+        // Rendre le joueur visible à nouveau
+        foreach (var renderer in _playerRenderers)
         {
-            if(r) r.enabled = true;
+            if (renderer != null)
+            {
+                renderer.enabled = true;
+            }
         }
-        
+
+        // Désactiver l'état d'invulnérabilité dans le ThreatManager
+        if (_threatManager != null)
+        {
+            _threatManager.SetInvulnerabilityActive(false);
+        }
+
         _isInvulnerable = false;
-        
-        // Ne pas notifier le ThreatManager pendant le tutoriel
-        if (GameManager.Instance == null || GameManager.Instance.CurrentState == GameState.Playing)
-        {
-            ThreatManager.Instance?.SetInvulnerabilityActive(false);
-        }
     }
 }

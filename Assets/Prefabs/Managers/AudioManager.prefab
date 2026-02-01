@@ -189,16 +189,16 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 115b1521ec223844498ab84dc6c5445b, type: 3}
   - name: Miam
     clip: {fileID: 8300000, guid: 5d0d9140ae4244542a08325cc25fd0ab, type: 3}
-  - name: OhOH
-    clip: {fileID: 0}
+  - name: OhOh
+    clip: {fileID: 8300000, guid: d20fa40962b607f4fbc6b08d47056437, type: 3}
   - name: WowYeah
     clip: {fileID: 8300000, guid: de48505400d53924f8c6bd60a82d9a02, type: 3}
   - name: Alarm
     clip: {fileID: 8300000, guid: 57445ad37b674ce45a987643f112882d, type: 3}
-  - name: ShieldBreak
-    clip: {fileID: 0}
+  - name: Shield
+    clip: {fileID: 8300000, guid: 41730ea984983a34e8ec32d228c3b5f0, type: 3}
   - name: SpeedLost
-    clip: {fileID: 0}
+    clip: {fileID: 8300000, guid: 74b4ec9f04cc96f4db8465db69785f91, type: 3}
   - name: LetsGo
     clip: {fileID: 8300000, guid: eb0aaf39db206224aafc96659153ba01, type: 3}
   - name: Tududum
@@ -207,6 +207,8 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 9b5d4148734ad624ca26409fd2ca674d, type: 3}
   - name: Victory
     clip: {fileID: 8300000, guid: 6316ad3de9d634d4da9e91a68ac8173e, type: 3}
+  - name: Crash
+    clip: {fileID: 8300000, guid: 5ac7edd7d0bd4e44bbc6819a77318f1f, type: 3}
 --- !u!81 &399768825874800378
 AudioListener:
   m_ObjectHideFlags: 0

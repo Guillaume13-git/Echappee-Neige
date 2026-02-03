@@ -1,71 +1,85 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Je représente un clip sonore avec son nom et son fichier audio
+/// </summary>
 [System.Serializable]
 public class SFXClip
 {
-    public string name;
-    public AudioClip clip;
+    public string name; // Je stocke le nom de l'effet sonore
+    public AudioClip clip; // Je stocke le fichier audio de l'effet sonore
 }
 
+/// <summary>
+/// Je suis le gestionnaire audio du jeu.
+/// Je m'occupe de la musique de fond et des effets sonores.
+/// </summary>
 public class AudioManager : Singleton<AudioManager>
 {
     [Header("Audio Sources")]
-    [SerializeField] private AudioSource _musicSource;
-    [SerializeField] private AudioSource _sfxSource;
+    [SerializeField] private AudioSource _musicSource; // Je stocke la source audio pour la musique
+    [SerializeField] private AudioSource _sfxSource;   // Je stocke la source audio pour les effets sonores
     
     [Header("Music Clips")]
-    [SerializeField] private AudioClip _menuMusic;
-    [SerializeField] private AudioClip _gameplayMusic;
+    [SerializeField] private AudioClip _menuMusic;     // Je stocke la musique du menu
+    [SerializeField] private AudioClip _gameplayMusic; // Je stocke la musique du gameplay
     
     [Header("SFX Clips")]
-    [SerializeField] private List<SFXClip> _sfxClips = new List<SFXClip>();
+    [SerializeField] private List<SFXClip> _sfxClips = new List<SFXClip>(); // Je stocke la liste de tous mes effets sonores
     
+    // Je crée un dictionnaire pour accéder rapidement aux effets sonores par leur nom
     private Dictionary<string, AudioClip> _sfxDictionary = new Dictionary<string, AudioClip>();
 
+    /// <summary>
+    /// Je m'initialise au démarrage du jeu
+    /// </summary>
     protected override void Awake()
     {
-        // SÉCURITÉ : Si doublon, se détruire immédiatement
+        // SÉCURITÉ : Je vérifie qu'il n'y a pas déjà une instance de moi
         if (_instance != null && _instance != this)
         {
-            Debug.Log("[AudioManager] Doublon détecté, destruction immédiate");
-            DestroyImmediate(gameObject);
+            Debug.Log("[AudioManager] Doublon détecté, je me détruis immédiatement");
+            DestroyImmediate(gameObject); // Je me détruis pour éviter les doublons
             return;
         }
 
-        base.Awake();
-        DontDestroyOnLoad(gameObject); // ✅ IMPORTANT
+        base.Awake(); // J'initialise le Singleton
+        DontDestroyOnLoad(gameObject); // Je me rends persistant entre les scènes
         
+        // J'initialise mon dictionnaire d'effets sonores
         InitializeSFXDictionary();
 
-        // Configuration des AudioSources
+        // Je configure mes sources audio
         if (_musicSource != null)
         {
-            _musicSource.playOnAwake = false;
-            _musicSource.loop = true;
+            _musicSource.playOnAwake = false; // Je désactive le démarrage automatique
+            _musicSource.loop = true;         // J'active la répétition en boucle
         }
         
         if (_sfxSource != null)
         {
-            _sfxSource.playOnAwake = false;
+            _sfxSource.playOnAwake = false; // Je désactive le démarrage automatique
         }
         
         Debug.Log("[AudioManager] Initialisé avec succès");
     }
     
-    // ✅ AJOUT CRITIQUE : Start() pour s'abonner aux événements
+    /// <summary>
+    /// Je m'abonne aux événements du SettingsManager pour recevoir les changements de volume
+    /// </summary>
     private void Start()
     {
         Debug.Log("[AudioManager] Start() - Abonnement aux événements");
         
-        // Attendre que SettingsManager soit prêt
+        // J'attends que le SettingsManager soit prêt
         if (SettingsManager.Instance != null)
         {
-            // S'abonner aux changements de volume
+            // Je m'abonne aux événements de changement de volume
             SettingsManager.Instance.OnMusicVolumeChanged += SetMusicVolume;
             SettingsManager.Instance.OnSFXVolumeChanged += SetSFXVolume;
             
-            // Appliquer les volumes sauvegardés
+            // J'applique immédiatement les volumes sauvegardés
             SetMusicVolume(SettingsManager.Instance.MusicVolume);
             SetSFXVolume(SettingsManager.Instance.SFXVolume);
             
@@ -77,9 +91,12 @@ public class AudioManager : Singleton<AudioManager>
         }
     }
     
-    // ✅ Nettoyage lors de la destruction
+    /// <summary>
+    /// Je me désabonne des événements quand je suis détruit
+    /// </summary>
     protected override void OnDestroy()
     {
+        // Si le SettingsManager existe encore, je me désabonne de ses événements
         if (SettingsManager.Instance != null)
         {
             SettingsManager.Instance.OnMusicVolumeChanged -= SetMusicVolume;
@@ -87,75 +104,105 @@ public class AudioManager : Singleton<AudioManager>
         }
     }
 
+    /// <summary>
+    /// J'initialise mon dictionnaire d'effets sonores pour un accès rapide
+    /// </summary>
     private void InitializeSFXDictionary()
     {
+        // Je vide le dictionnaire au cas où
         _sfxDictionary.Clear();
         
+        // Je parcours tous mes clips sonores
         foreach (SFXClip sfx in _sfxClips)
         {
+            // Je vérifie que le clip est valide
             if (sfx != null && !string.IsNullOrEmpty(sfx.name) && sfx.clip != null)
             {
+                // Je vérifie qu'il n'y a pas de doublon
                 if (!_sfxDictionary.ContainsKey(sfx.name))
                 {
+                    // J'ajoute le clip au dictionnaire
                     _sfxDictionary.Add(sfx.name, sfx.clip);
                 }
             }
         }
         
+        // J'affiche le nombre d'effets sonores chargés
         Debug.Log($"[AudioManager] {_sfxDictionary.Count} SFX chargés");
     }
 
     /// <summary>
-    /// Joue une musique de fond.
-    /// Ne relance pas si la même musique est déjà en cours.
+    /// Je joue une musique de fond.
+    /// Je ne relance pas la musique si elle est déjà en cours.
     /// </summary>
+    /// <param name="music">Le clip musical à jouer</param>
+    /// <param name="loop">Si je dois répéter la musique en boucle</param>
     public void PlayMusic(AudioClip music, bool loop = true)
     {
+        // Je vérifie que j'ai une source audio et un clip valide
         if (_musicSource == null || music == null) return;
 
-        // Vérifier si la même musique joue déjà
+        // Je vérifie si la même musique est déjà en train de jouer
         if (_musicSource.isPlaying && _musicSource.clip != null)
         {
             if (_musicSource.clip.name == music.name)
             {
+                // Si c'est la même musique, je ne fais rien
                 Debug.Log($"[AudioManager] Musique '{music.name}' déjà en cours");
                 return;
             }
         }
 
+        // Je lance la nouvelle musique
         Debug.Log($"[AudioManager] Lecture de la musique : {music.name}");
-        _musicSource.clip = music;
-        _musicSource.loop = loop;
-        _musicSource.Play();
+        _musicSource.clip = music;      // Je définis le clip à jouer
+        _musicSource.loop = loop;       // Je configure la répétition
+        _musicSource.Play();            // Je lance la lecture
     }
 
+    /// <summary>
+    /// Je joue la musique du menu
+    /// </summary>
     public void PlayMenuMusic() => PlayMusic(_menuMusic);
+    
+    /// <summary>
+    /// Je joue la musique du gameplay
+    /// </summary>
     public void PlayGameplayMusic() => PlayMusic(_gameplayMusic);
 
     /// <summary>
-    /// Joue un effet sonore.
+    /// Je joue un effet sonore
     /// </summary>
+    /// <param name="sfxName">Le nom de l'effet sonore à jouer</param>
+    /// <param name="volumeScale">Le multiplicateur de volume (1.0 = volume normal)</param>
     public void PlaySFX(string sfxName, float volumeScale = 1f)
     {
+        // Je vérifie que j'ai une source audio
         if (_sfxSource == null) return;
         
+        // Je cherche l'effet sonore dans mon dictionnaire
         if (_sfxDictionary.TryGetValue(sfxName, out AudioClip clip))
         {
+            // Je joue l'effet sonore avec PlayOneShot (permet de jouer plusieurs sons simultanément)
             _sfxSource.PlayOneShot(clip, volumeScale);
         }
         else
         {
+            // Si je ne trouve pas l'effet sonore, j'affiche un avertissement
             Debug.LogWarning($"[AudioManager] SFX '{sfxName}' introuvable !");
         }
     }
 
     /// <summary>
-    /// Modifie le volume de la musique.
+    /// Je modifie le volume de la musique
     /// </summary>
+    /// <param name="volume">Le nouveau volume (0.0 à 1.0)</param>
     public void SetMusicVolume(float volume)
     {
+        // Je vérifie que ma source audio de musique existe
         if (_musicSource != null)
         {
+            // J'applique le volume en m'assurant qu'il est entre 0 et 1
             _musicSource.volume = Mathf.Clamp01(volume);
             Debug.Log($"[AudioManager] Volume Musique appliqué : {_musicSource.volume:F2}");
         }
@@ -166,12 +213,15 @@ public class AudioManager : Singleton<AudioManager>
     }
 
     /// <summary>
-    /// Modifie le volume des SFX.
+    /// Je modifie le volume des effets sonores
     /// </summary>
+    /// <param name="volume">Le nouveau volume (0.0 à 1.0)</param>
     public void SetSFXVolume(float volume)
     {
+        // Je vérifie que ma source audio d'effets sonores existe
         if (_sfxSource != null)
         {
+            // J'applique le volume en m'assurant qu'il est entre 0 et 1
             _sfxSource.volume = Mathf.Clamp01(volume);
             Debug.Log($"[AudioManager] Volume SFX appliqué : {_sfxSource.volume:F2}");
         }
@@ -181,8 +231,22 @@ public class AudioManager : Singleton<AudioManager>
         }
     }
     
-    // Méthodes utilitaires
+    // ---------------------------------------------------------
+    // MÉTHODES UTILITAIRES
+    // ---------------------------------------------------------
+    
+    /// <summary>
+    /// Je retourne ma source audio de musique
+    /// </summary>
     public AudioSource GetMusicSource() => _musicSource;
+    
+    /// <summary>
+    /// Je retourne le clip de musique du menu
+    /// </summary>
     public AudioClip GetMenuMusicClip() => _menuMusic;
+    
+    /// <summary>
+    /// Je retourne le clip de musique du gameplay
+    /// </summary>
     public AudioClip GetGameplayMusicClip() => _gameplayMusic;
 }

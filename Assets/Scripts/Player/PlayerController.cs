@@ -3,7 +3,7 @@ using System.Collections;
 
 /// <summary>
 /// Contrôleur du joueur.
-/// Gère les couloirs (AZERTY compatible), la gravité, l'accroupissement et l'inclinaison.
+/// Gère les couloirs, la gravité, l'accroupissement et le freinage additif (Chasse-neige).
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
@@ -30,7 +30,8 @@ public class PlayerController : MonoBehaviour
     private bool _isGrounded;
 
     [Header("Slowdown (Chasse-Neige)")]
-    [SerializeField] private float _slowdownMultiplier = 0.6f;
+    [Tooltip("Réduction de vitesse en m/s quand le chasse-neige est actif (GDD : -4 m/s)")]
+    [SerializeField] private float _snowplowReduction = 4f; 
     private bool _isSlowingDown = false;
 
     [Header("Crouch & Visuals")]
@@ -73,9 +74,7 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance != null &&
-            GameManager.Instance.CurrentState != GameState.Playing &&
-            GameManager.Instance.CurrentState != GameState.Tutorial)
+        if (GameManager.Instance != null && !GameManager.Instance.IsGameActive)
             return;
 
         HandleInput();
@@ -85,13 +84,24 @@ public class PlayerController : MonoBehaviour
 
     private void HandleInput()
     {
+        // Changement de couloir (AZERTY / Flèches)
         if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.Q))
             MoveLane(-1);
         else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
             MoveLane(1);
 
+        // Accroupissement
         _isCrouching = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S);
+        
+        // Chasse-neige (Freinage)
+        bool wasSlowingDown = _isSlowingDown;
         _isSlowingDown = Input.GetKey(KeyCode.Space);
+        
+        // Notification au ThreatManager si l'état change
+        if (_isSlowingDown != wasSlowingDown && ThreatManager.Instance != null)
+        {
+            ThreatManager.Instance.SetSnowplowActive(_isSlowingDown);
+        }
     }
 
     private void MoveLane(int direction)
@@ -111,59 +121,63 @@ public class PlayerController : MonoBehaviour
         AudioManager.Instance?.PlaySFX("Whoosh");
     }
 
-    // ✅ Ajouté pour corriger l'erreur du TutorialManager
-    public int GetCurrentLane()
-    {
-        return _currentLaneIndex;
-    }
+    public int GetCurrentLane() => _currentLaneIndex;
 
     private void ApplyMovement()
     {
         _isGrounded = _controller.isGrounded;
 
+        // Déplacement latéral
         float currentX = transform.position.x;
         float nextX = Mathf.MoveTowards(currentX, _targetXPosition, _laneChangeSpeed * Time.deltaTime);
         float deltaX = nextX - currentX;
 
+        // Gravité simple
         if (_isGrounded) _verticalVelocity = -2f; 
         _verticalVelocity += _gravity * Time.deltaTime;
 
         Vector3 move = new Vector3(deltaX, _verticalVelocity * Time.deltaTime, 0f);
         _controller.Move(move);
 
-        if (!_isGrounded && transform.position.y > 0.01f && _verticalVelocity > 0f)
-            _verticalVelocity = -1f; 
-
+        // Inclinaison visuelle lors du changement de couloir
         float tilt = (deltaX / Time.deltaTime) * (_leanAmount / _laneChangeSpeed);
         Quaternion targetRotation = Quaternion.Euler(0, 0, -tilt);
         transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
 
+        // Correction de sécurité Z
         if (transform.position.z != 0)
         {
-            Vector3 pos = transform.position;
-            pos.z = 0;
-            transform.position = pos;
+            transform.position = new Vector3(transform.position.x, transform.position.y, 0f);
         }
     }
 
+    /// <summary>
+    /// Calcule la vitesse actuelle du joueur (utilisé par ChunkMover).
+    /// </summary>
     public float GetCurrentForwardSpeed()
     {
-        float finalMultiplier = _speedMultiplier;
-        if (_isSlowingDown && !IsAccelerated) finalMultiplier *= _slowdownMultiplier;
-        return _currentBaseSpeed * finalMultiplier;
+        // 1. Vitesse de base (Phases) * Multiplicateur (Boost)
+        float speed = _currentBaseSpeed * _speedMultiplier;
+        
+        // 2. Soustraction additive du chasse-neige (GDD : -4m/s)
+        if (_isSlowingDown && !IsAccelerated)
+        {
+            speed -= _snowplowReduction;
+            speed = Mathf.Max(speed, 2f); // Sécurité : Vitesse minimum de 2m/s
+        }
+        
+        return speed;
     }
 
-    #region Speed Boost / PowerUps
+    #region PowerUps
 
     public void ActivateSpeedBoost(float duration)
     {
         StopCoroutine(nameof(SpeedBoostCoroutine));
         StartCoroutine(SpeedBoostCoroutine(duration));
-        // L'UI est déclenchée ici ou dans PlayerCollision, les deux fonctionnent
         BonusUIManager.Instance?.TriggerSpeedBoost(duration);
     }
 
-    // ✅ Ajouté pour corriger l'erreur de PlayerCollision lors d'un choc
     public void StopSpeedBoost()
     {
         StopCoroutine(nameof(SpeedBoostCoroutine));
@@ -173,21 +187,19 @@ public class PlayerController : MonoBehaviour
         ScoreManager.Instance?.SetSpeedMultiplier(false);
     }
 
-    public void ActivateShield(float duration)
-    {
-        BonusUIManager.Instance?.TriggerShield(duration);
-    }
-
     private IEnumerator SpeedBoostCoroutine(float duration)
     {
         IsAccelerated = true;
         _speedMultiplier = 2.5f;
         ThreatManager.Instance?.SetSpeedBoostActive(true);
         ScoreManager.Instance?.SetSpeedMultiplier(true);
-
         yield return new WaitForSeconds(duration);
-
         StopSpeedBoost();
+    }
+
+    public void ActivateShield(float duration)
+    {
+        BonusUIManager.Instance?.TriggerShield(duration);
     }
 
     #endregion
@@ -212,11 +224,11 @@ public class PlayerController : MonoBehaviour
     {
         _currentBaseSpeed = phase switch
         {
-            TrackPhase.Green => 12f,
-            TrackPhase.Blue  => 15f,
-            TrackPhase.Red   => 20f,
-            TrackPhase.Black => 25f,
-            _                => 12f
+            TrackPhase.Green => 5f,
+            TrackPhase.Blue  => 10f,
+            TrackPhase.Red   => 15f,
+            TrackPhase.Black => 20f,
+            _                => 5f
         };
     }
 

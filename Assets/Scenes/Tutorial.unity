@@ -800,6 +800,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 3401030515113234032, guid: d2d6dc9a9454db44888df75892796019, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
     - target: {fileID: 3437413653191362525, guid: d2d6dc9a9454db44888df75892796019, type: 3}
       propertyPath: _gravity
       value: 0
@@ -1136,6 +1140,7 @@ MonoBehaviour:
   _defaultChunkLength: 25
   _recycleThresholdZ: -3
   _isTutorialMode: 1
+  _showDebugLogs: 0
 --- !u!1 &1272531752
 GameObject:
   m_ObjectHideFlags: 0

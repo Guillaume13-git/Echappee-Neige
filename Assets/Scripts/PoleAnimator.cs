@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// Je suis responsable de l'animation des bâtons de ski du joueur.
-/// Mon rôle : créer un mouvement de balancier alterné et naturel pendant que le joueur skie.
+/// Mon rôle : créer un mouvement de balancier synchronisé et naturel pendant que le joueur skie.
 /// Je dois être attaché au GameObject "PoleVisuals" dans la hiérarchie du joueur.
 /// </summary>
 public class PoleAnimator : MonoBehaviour
@@ -38,8 +38,9 @@ public class PoleAnimator : MonoBehaviour
     }
     
     /// <summary>
-    /// À chaque frame, j'anime les bâtons de ski avec un mouvement alterné.
+    /// À chaque frame, j'anime les bâtons de ski avec un mouvement synchronisé.
     /// Mon animation simule le mouvement naturel des bras pendant le ski.
+    /// Les deux bâtons bougent maintenant dans le même sens, ensemble.
     /// </summary>
     private void Update()
     {
@@ -68,15 +69,15 @@ public class PoleAnimator : MonoBehaviour
             _poleLeft.localEulerAngles = leftRot;
         }
         
-        // J'applique la rotation au bâton droit (en opposition avec le gauche)
+        // J'applique la même rotation au bâton droit (synchronisé avec le gauche)
         if (_poleRight != null)
         {
             // Je récupère la rotation actuelle en coordonnées locales
             Vector3 rightRot = _poleRight.localEulerAngles;
             
-            // Je modifie l'axe X avec le balancement OPPOSÉ (remarquez le signe -)
-            // Cela crée le mouvement alterné : quand le gauche va en avant, le droit va en arrière
-            rightRot.x = 15 - swing;
+            // Je modifie l'axe X avec le MÊME balancement (j'ai enlevé le signe -)
+            // Maintenant les deux bâtons bougent ensemble dans le même sens
+            rightRot.x = 15 + swing;
             
             // J'applique la nouvelle rotation
             _poleRight.localEulerAngles = rightRot;

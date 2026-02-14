@@ -5,11 +5,13 @@ using UnityEngine.UI;
 /// Je gère l'affichage visuel d'un bonus temporaire avec son timer de cooldown.
 /// Mon rôle est de montrer au joueur combien de temps il lui reste avant que le bonus n'expire.
 /// J'anime l'apparition et la disparition pour un effet visuel agréable.
+/// Je peux fonctionner avec OU sans CooldownOverlay (optionnel).
 /// </summary>
 public class BonusDisplay : MonoBehaviour
 {
     [Header("UI References")]
-    [SerializeField] private Image _cooldownOverlay; // Je stocke l'image qui sert de barre de progression circulaire
+    [Tooltip("OPTIONNEL : Image du timer circulaire. Laisse vide si tu ne veux pas de timer visuel.")]
+    [SerializeField] private Image _cooldownOverlay; // Je stocke l'image qui sert de barre de progression circulaire (OPTIONNEL)
     
     [Header("Animation Settings")]
     [SerializeField] private float _popupDuration = 0.3f;      // Durée de l'animation d'apparition
@@ -33,6 +35,12 @@ public class BonusDisplay : MonoBehaviour
         
         // Je cache mon GameObject au démarrage car je ne dois apparaître que lorsqu'un bonus est ramassé
         gameObject.SetActive(false);
+        
+        // J'affiche un avertissement si le CooldownOverlay n'est pas assigné (c'est OK, c'est optionnel)
+        if (_cooldownOverlay == null)
+        {
+            Debug.Log($"[BonusDisplay] {gameObject.name} : Pas de CooldownOverlay assigné (mode sans timer visuel)");
+        }
     }
 
     /// <summary>
@@ -42,6 +50,10 @@ public class BonusDisplay : MonoBehaviour
     /// <param name="duration">La durée totale du bonus en secondes</param>
     public void ShowBonus(float duration)
     {
+        Debug.Log($"[BonusDisplay] 🎯 ShowBonus appelé sur {gameObject.name} pour {duration}s");
+        Debug.Log($"[BonusDisplay]   └─ GameObject actif AVANT : {gameObject.activeSelf}");
+        Debug.Log($"[BonusDisplay]   └─ CooldownOverlay présent : {(_cooldownOverlay != null ? "OUI" : "NON")}");
+
         // Je sauvegarde la durée totale du bonus pour calculer le pourcentage restant
         _duration = duration;
         
@@ -54,8 +66,21 @@ public class BonusDisplay : MonoBehaviour
         // Je me rends visible à l'écran
         gameObject.SetActive(true);
         
+        Debug.Log($"[BonusDisplay]   └─ GameObject actif APRÈS : {gameObject.activeSelf}");
+        Debug.Log($"[BonusDisplay]   └─ Position : {transform.position}");
+        Debug.Log($"[BonusDisplay]   └─ Scale : {transform.localScale}");
+        
+        // Si j'ai un CooldownOverlay, je le réinitialise à plein
+        if (_cooldownOverlay != null)
+        {
+            _cooldownOverlay.fillAmount = 1f;
+            Debug.Log($"[BonusDisplay]   └─ CooldownOverlay initialisé à 100%");
+        }
+        
         // Je lance l'animation d'apparition
         StartPopupAnimation();
+        
+        Debug.Log($"[BonusDisplay] ✓ Animation lancée sur {gameObject.name}");
     }
 
     /// <summary>
@@ -101,6 +126,8 @@ public class BonusDisplay : MonoBehaviour
         transform.localScale = _originalScale;
         
         _isAnimating = false;
+        
+        Debug.Log($"[BonusDisplay] ✓ Animation d'apparition terminée sur {gameObject.name}");
     }
 
     /// <summary>
@@ -108,6 +135,8 @@ public class BonusDisplay : MonoBehaviour
     /// </summary>
     private void StartDisappearAnimation()
     {
+        Debug.Log($"[BonusDisplay] 🔽 Début de l'animation de disparition sur {gameObject.name}");
+        
         // J'arrête toute animation en cours
         StopAllCoroutines();
         
@@ -144,6 +173,8 @@ public class BonusDisplay : MonoBehaviour
         
         // Je me masque complètement
         gameObject.SetActive(false);
+        
+        Debug.Log($"[BonusDisplay] ✓ Animation de disparition terminée sur {gameObject.name}");
     }
 
     /// <summary>
@@ -158,7 +189,8 @@ public class BonusDisplay : MonoBehaviour
         // Je décrémente mon timer en fonction du temps écoulé depuis la dernière frame
         _timer -= Time.deltaTime;
 
-        // Je mets à jour la barre de progression visuelle si elle existe
+        // Je mets à jour la barre de progression visuelle SI ELLE EXISTE
+        // Si _cooldownOverlay est null, cette partie est simplement ignorée (pas d'erreur)
         if (_cooldownOverlay != null)
         {
             // Je calcule le ratio temps_restant/durée_totale pour avoir une valeur entre 0 et 1
@@ -169,6 +201,8 @@ public class BonusDisplay : MonoBehaviour
         // Quand le timer arrive à 0 ou en dessous, le bonus a expiré
         if (_timer <= 0)
         {
+            Debug.Log($"[BonusDisplay] ⏱️ Timer expiré sur {gameObject.name}");
+            
             // Je passe en mode inactif
             _isActive = false;
             
@@ -183,6 +217,8 @@ public class BonusDisplay : MonoBehaviour
     /// </summary>
     public void ForceDeactivate()
     {
+        Debug.Log($"[BonusDisplay] 🛑 Désactivation forcée de {gameObject.name}");
+        
         _isActive = false;
         _timer = 0;
         StopAllCoroutines();
@@ -204,6 +240,7 @@ public class BonusDisplay : MonoBehaviour
     [ContextMenu("Test Popup Animation")]
     private void TestPopupAnimation()
     {
+        Debug.Log($"[BonusDisplay] 🧪 Test d'apparition sur {gameObject.name}");
         ShowBonus(5f);
     }
 
@@ -213,6 +250,7 @@ public class BonusDisplay : MonoBehaviour
     [ContextMenu("Test Disappear Animation")]
     private void TestDisappearAnimation()
     {
+        Debug.Log($"[BonusDisplay] 🧪 Test de disparition sur {gameObject.name}");
         gameObject.SetActive(true);
         StartDisappearAnimation();
     }

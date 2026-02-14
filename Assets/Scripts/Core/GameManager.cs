@@ -232,14 +232,24 @@ public class GameManager : Singleton<GameManager>
         SceneManager.LoadScene("MainMenu"); // Je charge la scène du menu
     }
 
-    // ---------------------------------------------------------
-    // GAME OVER
-    // ---------------------------------------------------------
+// ---------------------------------------------------------
+// GAME OVER
+// ---------------------------------------------------------
+
+/// <summary>
+/// Je déclenche un game over et charge la scène GameOver
+/// </summary>
+public void TriggerGameOver()
+{
+    // Je change l'état vers GameOver
+    // Cela va automatiquement sauvegarder le score via SetGameState()
+    SetGameState(GameState.GameOver);
     
-    /// <summary>
-    /// Je déclenche un game over
-    /// </summary>
-    public void TriggerGameOver() => SetGameState(GameState.GameOver);
+    // Je charge la scène GameOver
+    SceneManager.LoadScene("GameOver");
+    
+    Debug.Log("[GameManager] Game Over ! Chargement de la scène GameOver.");
+}
 
     /// <summary>
     /// Je sauvegarde le score final du joueur

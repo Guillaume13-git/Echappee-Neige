@@ -247,6 +247,7 @@ public class ThreatManager : MonoBehaviour
         };
     }
     
+    // ✅ MODIFICATION 1 : Utiliser TriggerGameOver() au lieu de SetGameState()
     /// <summary>
     /// Je déclenche le Game Over quand la menace atteint 100%
     /// </summary>
@@ -256,11 +257,13 @@ public class ThreatManager : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.GameOver) 
             return;
 
+        Debug.Log("[ThreatManager] Menace à 100% - Déclenchement du Game Over !");
+
         // J'invoque l'événement Game Over
         OnGameOver?.Invoke();
         
-        // Je demande au GameManager de changer l'état du jeu
-        GameManager.Instance?.SetGameState(GameState.GameOver);
+        // ✅ CORRECTION : J'utilise TriggerGameOver() qui va changer l'état ET charger la scène
+        GameManager.Instance?.TriggerGameOver();
         
         // Je joue le son de crash
         AudioManager.Instance?.PlaySFX("Crash");

@@ -223,6 +223,11 @@ MonoBehaviour:
   _audioManager: {fileID: 0}
   _forcePlayingState: 1
   _playGameplayMusic: 1
+--- !u!4 &181859225 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8714338984754740, guid: d2d6dc9a9454db44888df75892796019, type: 3}
+  m_PrefabInstance: {fileID: 509511410}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &188469770
 GameObject:
   m_ObjectHideFlags: 0
@@ -789,14 +794,17 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3401030515113234032, guid: d2d6dc9a9454db44888df75892796019, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1362495811}
   m_SourcePrefab: {fileID: 100100000, guid: d2d6dc9a9454db44888df75892796019, type: 3}
 --- !u!114 &509511411 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3437413653191362525, guid: d2d6dc9a9454db44888df75892796019, type: 3}
   m_PrefabInstance: {fileID: 509511410}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 807706546}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5252688ff5c40294d869c4025f36e79a, type: 3}
@@ -1001,6 +1009,11 @@ Transform:
   - {fileID: 104316946}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &807706546 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3401030515113234032, guid: d2d6dc9a9454db44888df75892796019, type: 3}
+  m_PrefabInstance: {fileID: 509511410}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &854713191
 GameObject:
   m_ObjectHideFlags: 0
@@ -1159,6 +1172,11 @@ Transform:
   - {fileID: 1362495808}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &1112594957 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7425253627038278342, guid: d2d6dc9a9454db44888df75892796019, type: 3}
+  m_PrefabInstance: {fileID: 509511410}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1139785766
 GameObject:
   m_ObjectHideFlags: 0
@@ -1729,6 +1747,30 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 9049602025805703539, guid: d2d6dc9a9454db44888df75892796019, type: 3}
   m_PrefabInstance: {fileID: 509511410}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1362495811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 807706546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3220ba35406cb8148ad901f845a43c4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnowTrailEffect
+  _leftSkiPosition: {fileID: 1112594957}
+  _rightSkiPosition: {fileID: 181859225}
+  _leftSnowParticles: {fileID: 0}
+  _rightSnowParticles: {fileID: 0}
+  _minEmissionRate: 5
+  _maxEmissionRate: 100
+  _maxSpeedThreshold: 20
+  _snowColor: {r: 1, g: 1, b: 1, a: 1}
+  _particleSizeRange: {x: 0.1, y: 0.2}
+  _particleSpeedRange: {x: 2, y: 5}
+  _showDebugLogs: 0
+  _showDebugUI: 0
 --- !u!1 &1451920457
 GameObject:
   m_ObjectHideFlags: 0

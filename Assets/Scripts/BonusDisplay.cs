@@ -21,7 +21,6 @@ public class BonusDisplay : MonoBehaviour
     private float _duration;   // Je garde en mémoire la durée totale du bonus
     private float _timer;      // Je compte le temps restant avant expiration
     private bool _isActive;    // Je sais si le bonus est actuellement actif ou non
-    private bool _isAnimating; // Je sais si je suis en train de m'animer
 
     private Vector3 _originalScale; // Je sauvegarde l'échelle d'origine
 
@@ -100,8 +99,6 @@ public class BonusDisplay : MonoBehaviour
     /// </summary>
     private System.Collections.IEnumerator PopupAnimation()
     {
-        _isAnimating = true;
-        
         // Je commence à échelle 0 (invisible)
         transform.localScale = Vector3.zero;
         
@@ -125,8 +122,6 @@ public class BonusDisplay : MonoBehaviour
         // Je m'assure d'arriver exactement à l'échelle finale
         transform.localScale = _originalScale;
         
-        _isAnimating = false;
-        
         Debug.Log($"[BonusDisplay] ✓ Animation d'apparition terminée sur {gameObject.name}");
     }
 
@@ -149,8 +144,6 @@ public class BonusDisplay : MonoBehaviour
     /// </summary>
     private System.Collections.IEnumerator DisappearAnimation()
     {
-        _isAnimating = true;
-        
         float elapsed = 0f;
         Vector3 startScale = transform.localScale;
         
@@ -168,8 +161,6 @@ public class BonusDisplay : MonoBehaviour
         
         // Je m'assure d'être complètement invisible
         transform.localScale = Vector3.zero;
-        
-        _isAnimating = false;
         
         // Je me masque complètement
         gameObject.SetActive(false);

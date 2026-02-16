@@ -43,6 +43,14 @@ public class SettingsManager : Singleton<SettingsManager>
     protected override void Awake()
     {
         base.Awake(); // J'initialise le Singleton
+        
+        // ✅ CORRECTION 1 : Je me détache de mon parent pour être à la racine
+        if (transform.parent != null)
+        {
+            transform.SetParent(null);
+        }
+        
+        // ✅ CORRECTION 2 : Maintenant je peux me rendre persistant
         DontDestroyOnLoad(gameObject); // Je me rends persistant entre les scènes
         
         // J'initialise mes données de manière préventive pour éviter les erreurs null

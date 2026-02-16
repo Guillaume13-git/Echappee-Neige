@@ -142,21 +142,21 @@ public class ObstacleSpawner : MonoBehaviour
     /// Plus la phase est avancée (Green → Black), plus je génère d'obstacles.
     /// </summary>
     /// <param name="phase">La phase de piste actuelle</param>
-    /// <returns>Le nombre d'obstacles que je vais spawner (entre 1 et 3)</returns>
+    /// <returns>Le nombre d'obstacles que je vais spawner</returns>
     private int CalculateObstacleCount(TrackPhase phase)
     {
         // Je détermine un nombre de base selon la phase de difficulté
         int baseCount = phase switch
         {
-            TrackPhase.Green => 1,                      // Phase verte : toujours 1 obstacle (facile pour commencer)
-            TrackPhase.Blue => Random.Range(1, 2),      // Phase bleue : 1 ou 2 obstacles aléatoirement
-            TrackPhase.Red => Random.Range(2, 3),       // Phase rouge : 2 ou 3 obstacles
-            TrackPhase.Black => Random.Range(2, 4),     // Phase noire : 2 à 3 obstacles (maximum de difficulté)
-            _ => 1                                       // Cas par défaut : 1 obstacle
+            TrackPhase.Green => _minObstaclesPerChunk,                                              // Phase verte : minimum d'obstacles
+            TrackPhase.Blue => Random.Range(_minObstaclesPerChunk, _minObstaclesPerChunk + 2),      // Phase bleue : min à min+1
+            TrackPhase.Red => Random.Range(_minObstaclesPerChunk + 1, _maxObstaclesPerChunk),       // Phase rouge : min+1 à max-1
+            TrackPhase.Black => Random.Range(_minObstaclesPerChunk + 1, _maxObstaclesPerChunk + 1), // Phase noire : min+1 à max
+            _ => _minObstaclesPerChunk                                                              // Cas par défaut : minimum
         };
 
-        // Je m'assure que le nombre reste entre 1 et 3 pour éviter de saturer le chunk
-        return Mathf.Clamp(baseCount, 1, 3);
+        // Je m'assure que le nombre reste entre le min et le max configurés
+        return Mathf.Clamp(baseCount, _minObstaclesPerChunk, _maxObstaclesPerChunk);
     }
 
     /// <summary>

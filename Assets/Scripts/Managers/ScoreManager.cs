@@ -60,6 +60,17 @@ public class ScoreManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this; // Je deviens l'instance unique
+            
+            // ✅ CORRECTION 1 : Je me détache de mon parent pour être à la racine
+            if (transform.parent != null)
+            {
+                transform.SetParent(null);
+            }
+            
+            // ✅ CORRECTION 2 : Maintenant je peux me rendre persistant
+            DontDestroyOnLoad(gameObject);
+            
+            Debug.Log("[ScoreManager] Instance créée et rendue persistante");
         }
         else
         {
@@ -155,6 +166,9 @@ public class ScoreManager : MonoBehaviour
         
         // J'invoque l'événement pour notifier le changement
         OnScoreChanged?.Invoke(_currentScore);
+        
+        // Je log l'ajout pour le debug
+        Debug.Log($"[ScoreManager] Bonus ajouté : +{bonus}. Score total : {CurrentScore}");
     }
     
     /// <summary>
@@ -177,6 +191,9 @@ public class ScoreManager : MonoBehaviour
         
         // J'invoque l'événement pour notifier le changement
         OnScoreChanged?.Invoke(_currentScore);
+        
+        // Je log l'ajout pour le debug
+        Debug.Log($"[ScoreManager] Bonus de phase ajouté : +{bonus}. Score total : {CurrentScore}");
     }
     
     /// <summary>
@@ -187,6 +204,9 @@ public class ScoreManager : MonoBehaviour
     {
         // Je mets à jour l'état du multiplicateur
         _isSpeedBoosted = active;
+        
+        // Je log le changement
+        Debug.Log($"[ScoreManager] Multiplicateur x2 : {(active ? "ACTIVÉ" : "DÉSACTIVÉ")}");
     }
     
     /// <summary>
@@ -217,6 +237,9 @@ public class ScoreManager : MonoBehaviour
             TrackPhase.Black => _blackScoreRate,  // 100 points/seconde en noir
             _ => _greenScoreRate                  // 10 points/seconde par défaut
         };
+        
+        // Je log le changement pour le debug
+        Debug.Log($"[ScoreManager] Phase changée vers {phase}. Nouveau taux : {_currentScoreRate} pts/sec");
     }
     
     /// <summary>
@@ -224,8 +247,17 @@ public class ScoreManager : MonoBehaviour
     /// </summary>
     public void ResetScore()
     {
+        // Je sauvegarde l'ancien score pour le log
+        float oldScore = _currentScore;
+        
         _currentScore = 0f;              // Je réinitialise le score à 0
         _isSpeedBoosted = false;         // Je désactive le multiplicateur
+        _currentPhase = TrackPhase.Green; // Je reviens à la phase verte
+        _currentScoreRate = _greenScoreRate; // Je réinitialise le taux de score
+        
         OnScoreChanged?.Invoke(0f);      // J'invoque l'événement avec le score à 0
+        
+        // Je log la réinitialisation
+        Debug.Log($"[ScoreManager] Score réinitialisé. Ancien score : {Mathf.FloorToInt(oldScore)}");
     }
 }

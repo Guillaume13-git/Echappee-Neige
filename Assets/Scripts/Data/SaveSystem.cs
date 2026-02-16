@@ -23,6 +23,14 @@ public class SaveSystem : Singleton<SaveSystem>
     protected override void Awake()
     {
         base.Awake(); // J'initialise le Singleton pour garantir qu'il n'y ait qu'une seule instance de moi
+        
+        // ✅ CORRECTION 1 : Je me détache de mon parent pour être à la racine
+        if (transform.parent != null)
+        {
+            transform.SetParent(null);
+        }
+        
+        // ✅ CORRECTION 2 : Maintenant je peux me rendre persistant
         DontDestroyOnLoad(gameObject); // Je me rends persistant entre les changements de scènes
     }
 

@@ -479,6 +479,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: AudioManager
       objectReference: {fileID: 0}
+    - target: {fileID: 5458243197446245159, guid: a962326ffb1919942a54076c510f1b48, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -504,6 +508,10 @@ PrefabInstance:
     - target: {fileID: 2444653353267618923, guid: 66c8ca0b2b6cdee4794eac7b9d8571a6, type: 3}
       propertyPath: m_Name
       value: GameManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 2444653353267618923, guid: 66c8ca0b2b6cdee4794eac7b9d8571a6, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7215614437478973607, guid: 66c8ca0b2b6cdee4794eac7b9d8571a6, type: 3}
       propertyPath: m_LocalPosition.x
@@ -607,6 +615,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HighScoreManager
       objectReference: {fileID: 0}
+    - target: {fileID: 1562668302875302263, guid: 15499810675fcb247b3f3030d332481b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -649,6 +661,7 @@ Transform:
   - {fileID: 605429559}
   - {fileID: 791629318}
   - {fileID: 339474410}
+  - {fileID: 1565288883}
   - {fileID: 696760646}
   - {fileID: 872933041}
   - {fileID: 1069267007}
@@ -665,6 +678,10 @@ PrefabInstance:
     - target: {fileID: 380449340375132159, guid: db7c89f21cd6a0d4e873ce34908e142f, type: 3}
       propertyPath: m_Name
       value: SettingsManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 380449340375132159, guid: db7c89f21cd6a0d4e873ce34908e142f, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7718915474052773612, guid: db7c89f21cd6a0d4e873ce34908e142f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -833,6 +850,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SaveSystem
       objectReference: {fileID: 0}
+    - target: {fileID: 1972502051621346962, guid: edd04b74c41cf3e43907a632e02bbd7f, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3370819453526541348, guid: edd04b74c41cf3e43907a632e02bbd7f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -928,7 +949,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameOverMenuController
   _finalScoreText: {fileID: 1088689267}
-  _bestScoreText: {fileID: 0}
+  _bestScoreText: {fileID: 1088689267}
   _gameOverTitleText: {fileID: 0}
   _restartButton: {fileID: 1819120077}
   _mainMenuButton: {fileID: 1546137197}
@@ -1241,6 +1262,72 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+--- !u!1001 &1565288882
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 739842794}
+    m_Modifications:
+    - target: {fileID: 125782857681462947, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_Name
+      value: ScoreManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 125782857681462947, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3896382227706859068, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3896382227706859068, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3896382227706859068, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3896382227706859068, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3896382227706859068, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3896382227706859068, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3896382227706859068, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3896382227706859068, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3896382227706859068, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3896382227706859068, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+--- !u!4 &1565288883 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3896382227706859068, guid: cd6dfc579be646e4e9b899b007b375f2, type: 3}
+  m_PrefabInstance: {fileID: 1565288882}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1575454168
 GameObject:
   m_ObjectHideFlags: 0

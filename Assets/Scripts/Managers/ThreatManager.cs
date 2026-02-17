@@ -14,6 +14,10 @@ public class ThreatManager : MonoBehaviour
     [SerializeField] private float _maxThreat = 100f;  // Je stocke la menace maximale (100%)
     private float _currentThreat = 0f;                 // Je stocke la menace actuelle
     
+    [Header("Alarm Settings")]
+    [SerializeField] private float _alarmThreshold = 80f; // Je déclenche l'alarme à partir de ce seuil (80%)
+    private bool _isAlarmPlaying = false;                 // Je sais si l'alarme est en train de jouer
+    
     [Header("Auto Fill Intervals (by phase)")]
     [SerializeField] private float _greenInterval = 8f;   // Je gagne 1 point toutes les 8 secondes en phase verte
     [SerializeField] private float _blueInterval = 6f;    // Je gagne 1 point toutes les 6 secondes en phase bleue
@@ -122,6 +126,9 @@ public class ThreatManager : MonoBehaviour
         // Je me désabonne des changements de phase
         if (PhaseManager.Instance != null)
             PhaseManager.Instance.OnPhaseChanged -= UpdatePhase;
+        
+        // J'arrête l'alarme si elle joue encore
+        StopAlarm();
     }
     
     /// <summary>
@@ -132,6 +139,9 @@ public class ThreatManager : MonoBehaviour
     {
         // J'ajoute la menace en m'assurant de ne pas dépasser le maximum
         _currentThreat = Mathf.Min(_currentThreat + amount, _maxThreat);
+        
+        // Je vérifie si je dois activer ou désactiver l'alarme
+        CheckAlarmState();
         
         // J'invoque l'événement pour notifier le changement
         OnThreatChanged?.Invoke(ThreatPercentage);
@@ -174,8 +184,69 @@ public class ThreatManager : MonoBehaviour
         // Je retire la menace en m'assurant de ne pas passer en dessous de 0
         _currentThreat = Mathf.Max(_currentThreat - amount, 0f);
         
+        // Je vérifie si je dois activer ou désactiver l'alarme
+        CheckAlarmState();
+        
         // J'invoque l'événement pour notifier le changement
         OnThreatChanged?.Invoke(ThreatPercentage);
+    }
+    
+    /// <summary>
+    /// ✅ NOUVEAU : Je vérifie si l'alarme doit être activée ou désactivée selon le seuil de 80%
+    /// Mon rôle : Lancer l'alarme quand la menace dépasse 80%, l'arrêter quand elle redescend en dessous
+    /// </summary>
+    private void CheckAlarmState()
+    {
+        // Je calcule le pourcentage actuel de menace
+        float currentPercentage = ThreatPercentage;
+        
+        // Si la menace est au-dessus du seuil ET que l'alarme ne joue pas encore
+        if (currentPercentage >= _alarmThreshold && !_isAlarmPlaying)
+        {
+            StartAlarm(); // Je lance l'alarme
+        }
+        // Si la menace est en dessous du seuil ET que l'alarme est en train de jouer
+        else if (currentPercentage < _alarmThreshold && _isAlarmPlaying)
+        {
+            StopAlarm(); // J'arrête l'alarme
+        }
+    }
+    
+    /// <summary>
+    /// ✅ NOUVEAU : Je démarre l'alarme en boucle
+    /// </summary>
+    private void StartAlarm()
+    {
+        // Si l'AudioManager n'existe pas, je ne peux pas jouer l'alarme
+        if (AudioManager.Instance == null) return;
+        
+        // Je marque que l'alarme est en train de jouer
+        _isAlarmPlaying = true;
+        
+        // Je demande à l'AudioManager de jouer l'alarme en boucle
+        AudioManager.Instance.PlayAlarm();
+        
+        Debug.Log("[ThreatManager] 🚨 Alarme déclenchée - Menace au-dessus de 80% !");
+    }
+    
+    /// <summary>
+    /// ✅ NOUVEAU : J'arrête l'alarme
+    /// </summary>
+    private void StopAlarm()
+    {
+        // Si l'alarme ne joue pas, je ne fais rien
+        if (!_isAlarmPlaying) return;
+        
+        // Si l'AudioManager n'existe pas, je ne peux pas arrêter l'alarme
+        if (AudioManager.Instance == null) return;
+        
+        // Je marque que l'alarme n'est plus en train de jouer
+        _isAlarmPlaying = false;
+        
+        // Je demande à l'AudioManager d'arrêter l'alarme
+        AudioManager.Instance.StopAlarm();
+        
+        Debug.Log("[ThreatManager] ✅ Alarme arrêtée - Menace en dessous de 80%");
     }
     
     /// <summary>
@@ -247,7 +318,6 @@ public class ThreatManager : MonoBehaviour
         };
     }
     
-    // ✅ MODIFICATION 1 : Utiliser TriggerGameOver() au lieu de SetGameState()
     /// <summary>
     /// Je déclenche le Game Over quand la menace atteint 100%
     /// </summary>
@@ -259,10 +329,13 @@ public class ThreatManager : MonoBehaviour
 
         Debug.Log("[ThreatManager] Menace à 100% - Déclenchement du Game Over !");
 
+        // J'arrête l'alarme (si elle joue encore)
+        StopAlarm();
+
         // J'invoque l'événement Game Over
         OnGameOver?.Invoke();
         
-        // ✅ CORRECTION : J'utilise TriggerGameOver() qui va changer l'état ET charger la scène
+        // J'utilise TriggerGameOver() qui va changer l'état ET charger la scène
         GameManager.Instance?.TriggerGameOver();
         
         // Je joue le son de crash
@@ -274,6 +347,9 @@ public class ThreatManager : MonoBehaviour
     /// </summary>
     public void ResetThreat()
     {
+        // J'arrête l'alarme si elle joue
+        StopAlarm();
+        
         _currentThreat = 0f;                // Je réinitialise la menace à 0
         _isSpeedBoostActive = false;        // Je désactive le boost de vitesse
         _isSnowplowActive = false;          // Je désactive le chasse-neige

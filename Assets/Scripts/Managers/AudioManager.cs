@@ -30,6 +30,9 @@ public class AudioManager : Singleton<AudioManager>
     
     // Je crée un dictionnaire pour accéder rapidement aux effets sonores par leur nom
     private Dictionary<string, AudioClip> _sfxDictionary = new Dictionary<string, AudioClip>();
+    
+    // ✅ NOUVEAU : Je crée une source audio dédiée pour l'alarme en boucle
+    private AudioSource _alarmSource;
 
     /// <summary>
     /// Je m'initialise au démarrage du jeu
@@ -201,6 +204,66 @@ public class AudioManager : Singleton<AudioManager>
         }
     }
 
+    // ---------------------------------------------------------
+    // ✅ NOUVELLES MÉTHODES POUR L'ALARME
+    // ---------------------------------------------------------
+    
+    /// <summary>
+    /// ✅ NOUVEAU : Je joue l'alarme en boucle
+    /// Mon rôle : Créer une source audio dédiée pour l'alarme et la jouer en continu
+    /// </summary>
+    public void PlayAlarm()
+    {
+        // Si la source d'alarme n'existe pas encore, je la crée
+        if (_alarmSource == null)
+        {
+            // Je crée une nouvelle source audio dédiée pour l'alarme
+            _alarmSource = gameObject.AddComponent<AudioSource>();
+            _alarmSource.loop = true;          // Je l'active en mode boucle
+            _alarmSource.playOnAwake = false;  // Je désactive le démarrage automatique
+            
+            Debug.Log("[AudioManager] Source audio d'alarme créée");
+        }
+        
+        // Je cherche le clip d'alarme dans mon dictionnaire
+        // IMPORTANT : Assurez-vous d'avoir un SFX nommé "Alarm" dans votre liste !
+        if (_sfxDictionary.TryGetValue("Alarm", out AudioClip alarmClip))
+        {
+            // Si l'alarme n'est pas déjà en train de jouer
+            if (!_alarmSource.isPlaying)
+            {
+                _alarmSource.clip = alarmClip;
+                
+                // Je synchronise le volume avec celui des SFX
+                if (_sfxSource != null)
+                {
+                    _alarmSource.volume = _sfxSource.volume;
+                }
+                
+                _alarmSource.Play();
+                Debug.Log("[AudioManager] 🚨 Alarme lancée en boucle");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[AudioManager] ⚠️ SFX 'Alarm' introuvable ! Ajoutez un clip nommé 'Alarm' dans votre liste de SFX.");
+        }
+    }
+    
+    /// <summary>
+    /// ✅ NOUVEAU : J'arrête l'alarme
+    /// Mon rôle : Arrêter proprement la lecture de l'alarme
+    /// </summary>
+    public void StopAlarm()
+    {
+        // Si la source d'alarme existe et qu'elle joue
+        if (_alarmSource != null && _alarmSource.isPlaying)
+        {
+            _alarmSource.Stop();
+            Debug.Log("[AudioManager] ✅ Alarme arrêtée");
+        }
+    }
+
     /// <summary>
     /// Je modifie le volume de la musique
     /// </summary>
@@ -236,6 +299,12 @@ public class AudioManager : Singleton<AudioManager>
         else
         {
             Debug.LogError("[AudioManager] SFXSource est NULL !");
+        }
+        
+        // ✅ NOUVEAU : Je synchronise aussi le volume de l'alarme si elle existe
+        if (_alarmSource != null)
+        {
+            _alarmSource.volume = Mathf.Clamp01(volume);
         }
     }
     

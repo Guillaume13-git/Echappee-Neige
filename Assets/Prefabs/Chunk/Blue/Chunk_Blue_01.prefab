@@ -369,7 +369,7 @@ MonoBehaviour:
   - {fileID: 3461146839936469169, guid: 060c7e31f99caa44d98faa0377703f1e, type: 3}
   _minObstaclesPerChunk: 1
   _maxObstaclesPerChunk: 3
-  _spawnInterLaneObstacles: 1
+  _spawnInterLaneObstacles: 0
   _interLaneSpawnChance: 0.2
   _barrierSpawnChance: 0.1
   _leftLaneX: -1.84

@@ -11,13 +11,9 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private GameState _currentState = GameState.MainMenu; // Je stocke l'état actuel du jeu
     [SerializeField] private bool _isPaused = false; // Je stocke si le jeu est en pause
 
-    // Je donne accès en lecture seule à l'état actuel
+    // Je donne accès en lecture seule aux informations d'état
     public GameState CurrentState => _currentState;
-    
-    // Je donne accès en lecture seule à l'état de pause
     public bool IsPaused => _isPaused;
-
-    // Je détermine si le jeu est actif (en cours ou en tutoriel)
     public bool IsGameActive => _currentState == GameState.Playing || _currentState == GameState.Tutorial;
 
     // Je fournis des événements pour notifier les changements d'état
@@ -70,11 +66,11 @@ public class GameManager : Singleton<GameManager>
         };
         
         // J'affiche l'état détecté dans la console
-        Debug.Log($"[GameManager] État initial : {_currentState}");
+        Debug.Log($"[GameManager] État initial détecté : {_currentState}");
     }
 
     /// <summary>
-    /// Je change l'état du jeu et applique les modifications nécessaires
+    /// Je change l'état du jeu et applique les modifications de logique (TimeScale, Événements)
     /// </summary>
     /// <param name="newState">Le nouvel état du jeu</param>
     public void SetGameState(GameState newState)
@@ -82,134 +78,102 @@ public class GameManager : Singleton<GameManager>
         // Si l'état demandé est le même que l'actuel, je ne fais rien
         if (_currentState == newState) return;
 
-        // Je mets à jour mon état
+        Debug.Log($"[GameManager] SetGameState : {_currentState} → {newState}");
+
+        // Je mets à jour l'état
         _currentState = newState;
         
-        // J'invoque l'événement pour notifier les autres scripts
+        // J'invoque l'événement global de changement d'état
         OnGameStateChanged?.Invoke(newState);
 
-        // J'applique les modifications selon le nouvel état
+        // J'applique les modifications système selon le nouvel état
         switch (newState)
         {
             case GameState.Playing:
             case GameState.Tutorial:
-                Time.timeScale = 1f;      // Je remets le temps normal
-                _isPaused = false;        // Je désactive l'état de pause
+                Time.timeScale = 1f;         // Je remets le temps normal
+                _isPaused = false;           // Je désactive l'état de pause
+                OnGameResumed?.Invoke();     // Je notifie les scripts UI de masquer le panel Pause
                 break;
                 
             case GameState.Paused:
+                Time.timeScale = 0f;         // Je fige le temps
+                _isPaused = true;
+                // Debug pour vérifier que le PauseController est bien abonné
+                Debug.Log($"[GameManager] OnGamePaused invoqué. Abonnés : {OnGamePaused?.GetInvocationList().Length ?? 0}");
+                OnGamePaused?.Invoke();      // Je notifie les scripts UI d'afficher le panel Pause
+                break;
+
             case GameState.GameOver:
-                Time.timeScale = 0f;      // Je fige le temps
-                
-                // Si c'est un game over, je sauvegarde le score final
-                if (newState == GameState.GameOver) 
-                    SaveFinalScore();
+                Time.timeScale = 0f;         // Je fige le temps
+                SaveFinalScore();            // Je sauvegarde le score final via HighScoreManager
                 break;
         }
     }
 
+    // ---------------------------------------------------------
+    // FLUX DE JEU (SCÈNES)
+    // ---------------------------------------------------------
+
     /// <summary>
-    /// Je démarre une nouvelle partie (appelé par le bouton "Jouer" du menu principal)
+    /// Je démarre une nouvelle partie
     /// </summary>
     public void StartNewGame()
     {
-        // Je réinitialise tous les managers pour repartir à zéro
         ResetAllManagers();
 
-        // Je vérifie si le tutoriel doit être affiché
+        // Je vérifie via le SettingsManager s'il faut forcer le tutoriel
         if (SettingsManager.Instance != null && SettingsManager.Instance.ShowTutorial)
         {
-            // Si oui, je lance le tutoriel
             StartTutorial();
         }
         else
         {
-            // Sinon, je lance directement le gameplay
             StartGameplay();
         }
     }
 
-    /// <summary>
-    /// Je démarre le tutoriel
-    /// </summary>
     public void StartTutorial()
     {
-        // Je change mon état vers Tutorial
         SetGameState(GameState.Tutorial);
-        
-        // Je charge la scène du tutoriel
         SceneManager.LoadScene("Tutorial");
     }
 
-    /// <summary>
-    /// Je termine le tutoriel et je lance le gameplay
-    /// (Appelé à la fin du tutoriel)
-    /// </summary>
     public void CompleteTutorial()
     {
         Debug.Log("[GameManager] Tutoriel complété ! Passage au Gameplay.");
-        
-        // Optionnel : Je peux désactiver le tuto pour les prochaines parties
-        // SettingsManager.Instance?.SetTutorialCompleted(); 
-
-        // Je lance le gameplay
         StartGameplay();
     }
 
-    /// <summary>
-    /// Je démarre le gameplay principal
-    /// </summary>
     private void StartGameplay()
     {
-        // Je change mon état vers Playing
         SetGameState(GameState.Playing);
-        
-        // Je charge la scène de gameplay
         SceneManager.LoadScene("Gameplay");
     }
 
-    // ---------------------------------------------------------
-    // GESTION DES MANAGERS
-    // ---------------------------------------------------------
-    
-    /// <summary>
-    /// Je réinitialise tous les managers pour une nouvelle partie
-    /// </summary>
     private void ResetAllManagers()
     {
-        // Je demande au ScoreManager de réinitialiser le score
         ScoreManager.Instance?.ResetScore();
-        
-        // Je demande au ThreatManager de réinitialiser la menace
         ThreatManager.Instance?.ResetThreat();
-        
-        // Je demande au PhaseManager de réinitialiser les phases
         PhaseManager.Instance?.ResetPhases();
     }
 
     // ---------------------------------------------------------
-    // GESTION DE LA PAUSE
+    // GESTION DE LA PAUSE & NAVIGATION
     // ---------------------------------------------------------
     
-    /// <summary>
-    /// Je mets le jeu en pause
-    /// </summary>
     public void PauseGame()
     {
-        // Je ne mets en pause que si le jeu est actif
+        Debug.Log($"[GameManager] PauseGame appelé. IsGameActive={IsGameActive}, état={_currentState}");
         if (IsGameActive) 
             SetGameState(GameState.Paused);
     }
 
-    /// <summary>
-    /// Je reprends le jeu après une pause
-    /// </summary>
     public void ResumeGame()
     {
-        // Je ne reprends que si je suis en pause
         if (_currentState == GameState.Paused)
         {
-            // Je détecte si je dois retourner en Tutorial ou en Playing
+            // Je détermine si je dois revenir en mode Tutorial ou Playing selon la scène
             GameState resumeState = SceneManager.GetActiveScene().name == "Tutorial" 
                 ? GameState.Tutorial 
                 : GameState.Playing;
@@ -218,66 +182,37 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
-    // ---------------------------------------------------------
-    // NAVIGATION
-    // ---------------------------------------------------------
-    
-    /// <summary>
-    /// Je retourne au menu principal
-    /// </summary>
     public void ReturnToMainMenu()
     {
-        Time.timeScale = 1f;              // Je remets le temps normal
-        SetGameState(GameState.MainMenu); // Je change mon état
-        SceneManager.LoadScene("MainMenu"); // Je charge la scène du menu
+        Time.timeScale = 1f;
+        SetGameState(GameState.MainMenu);
+        SceneManager.LoadScene("MainMenu");
     }
 
-// ---------------------------------------------------------
-// GAME OVER
-// ---------------------------------------------------------
+    public void TriggerGameOver()
+    {
+        SetGameState(GameState.GameOver);
+        SceneManager.LoadScene("GameOver");
+        Debug.Log("[GameManager] Game Over ! Chargement de la scène GameOver.");
+    }
 
-/// <summary>
-/// Je déclenche un game over et charge la scène GameOver
-/// </summary>
-public void TriggerGameOver()
-{
-    // Je change l'état vers GameOver
-    // Cela va automatiquement sauvegarder le score via SetGameState()
-    SetGameState(GameState.GameOver);
-    
-    // Je charge la scène GameOver
-    SceneManager.LoadScene("GameOver");
-    
-    Debug.Log("[GameManager] Game Over ! Chargement de la scène GameOver.");
-}
-
-    /// <summary>
-    /// Je sauvegarde le score final du joueur
-    /// </summary>
     private void SaveFinalScore()
     {
-        // Je vérifie que les managers nécessaires existent
         if (ScoreManager.Instance != null && HighScoreManager.Instance != null)
         {
-            // Je demande au HighScoreManager d'ajouter le score actuel
             HighScoreManager.Instance.AddScore(ScoreManager.Instance.CurrentScore);
         }
     }
 
     // ---------------------------------------------------------
-    // QUITTER LE JEU
+    // QUITTER
     // ---------------------------------------------------------
     
-    /// <summary>
-    /// Je quitte l'application
-    /// </summary>
     public void QuitGame()
     {
 #if UNITY_EDITOR
-        // Si je suis dans l'éditeur Unity, j'arrête le mode Play
         UnityEditor.EditorApplication.isPlaying = false;
 #else
-        // Sinon, je quitte l'application
         Application.Quit();
 #endif
     }

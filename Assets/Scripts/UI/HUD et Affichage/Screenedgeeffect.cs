@@ -68,8 +68,6 @@ public class ScreenEdgeEffect : MonoBehaviour
 
     // Je stocke l'état actuel
     private float _currentThreatPercent = 0f;
-    private float _targetAlpha = 0f;
-    private float _currentAlpha = 0f;
     private Color _targetColor;
     private bool _isInitialized = false;
 
